@@ -24,17 +24,17 @@ using namespace std;
 
 namespace L1 {
 
-  /* 
+  /*
    * Data required to parse
-   */ 
+   */
   std::vector<Item> parsed_registers;
 
-  /* 
+  /*
    * Grammar rules from now on.
    */
   struct name:
     pegtl::seq<
-      pegtl::plus< 
+      pegtl::plus<
         pegtl::sor<
           pegtl::alpha,
           pegtl::one< '_' >
@@ -49,6 +49,8 @@ namespace L1 {
       >
     > {};
 
+  aaaa;
+  
   struct label:
     pegtl::seq<
       pegtl::one<':'>,
@@ -63,7 +65,7 @@ namespace L1 {
           pegtl::one< '+' >
         >
       >,
-      pegtl::plus< 
+      pegtl::plus<
         pegtl::digit
       >
     >{};
@@ -77,20 +79,20 @@ namespace L1 {
   struct local_number:
     number {} ;
 
-  struct comment: 
-    pegtl::disable< 
-      TAOCPP_PEGTL_STRING( "//" ), 
-      pegtl::until< pegtl::eolf > 
+  struct comment:
+    pegtl::disable<
+      TAOCPP_PEGTL_STRING( "//" ),
+      pegtl::until< pegtl::eolf >
     > {};
 
-  /* 
+  /*
    * Keywords.
    */
 
   struct sx : TAOCPP_PEGTL_STRING( "rcx" ) {};
 
-  struct a : 
-    pegtl::sor< 
+  struct a :
+    pegtl::sor<
       TAOCPP_PEGTL_STRING( "rdi" ),
       TAOCPP_PEGTL_STRING( "rsi" ),
       TAOCPP_PEGTL_STRING( "rdx" ),
@@ -113,7 +115,7 @@ namespace L1 {
       TAOCPP_PEGTL_STRING( "r15" )
     > {};
 
-  struct M: 
+  struct M:
     number {};
 
   struct E :
@@ -126,12 +128,12 @@ namespace L1 {
 
   struct str_return : TAOCPP_PEGTL_STRING( "return" ) {};
 
-  struct seps: 
-    pegtl::star< 
-      pegtl::sor< 
-        pegtl::ascii::space, 
-        comment 
-      > 
+  struct seps:
+    pegtl::star<
+      pegtl::sor<
+        pegtl::ascii::space,
+        comment
+      >
     > {};
 
   struct Label_rule:
@@ -191,12 +193,12 @@ namespace L1 {
       seps
     > { };
 
-  struct grammar : 
-    pegtl::must< 
+  struct grammar :
+    pegtl::must<
       entry_point_rule
     > {};
 
-  /* 
+  /*
    * Actions attached to grammar rules.
    */
   template< typename Rule >
@@ -267,14 +269,14 @@ namespace L1 {
 
   Program parse_file (char *fileName){
 
-    /* 
+    /*
      * Check the grammar for some possible issues.
      */
     pegtl::analyze< grammar >();
 
     /*
      * Parse.
-     */   
+     */
     file_input< > fileInput(fileName);
     Program p;
     parse< grammar, action >(fileInput, p);
