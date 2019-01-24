@@ -5,4 +5,5 @@
 *.swp
 .~
 thumbs.db
-.tmp
+*.tmp
+.DS_Store
