@@ -49,8 +49,6 @@ namespace L1 {
       >
     > {};
 
-  aaaa;
-  
   struct label:
     pegtl::seq<
       pegtl::one<':'>,
