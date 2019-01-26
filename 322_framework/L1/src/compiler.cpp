@@ -62,6 +62,10 @@ int main(
    * Parse the input file.
    */
   auto p = L1::parse_file(argv[optind]);
+  auto i = (L1::Instruction_assign *) p.functions.back()->instructions.back();
+  cout << "dst: " << i->dst << "\n";
+  cout << "src: " << i->src << "\n";
+  cout << "op: " << i->op << "\n";
 
   /* 
    * Print the source program.

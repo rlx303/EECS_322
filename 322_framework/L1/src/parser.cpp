@@ -113,8 +113,58 @@ namespace L1 {
       TAOCPP_PEGTL_STRING( "r15" )
     > {};
 
-  struct M:
-    number {};
+  struct dst_w :
+    w {};
+
+  struct x :
+    pegtl::sor<
+      w,
+      TAOCPP_PEGTL_STRING( "rsp" )
+    > {};
+
+  struct t :
+    pegtl::sor<
+      x,
+      number
+    > {};
+
+  struct s :
+    pegtl::sor<
+      t,
+      label
+    >{};
+
+  struct u :
+    pegtl::sor<
+      w,
+      label
+    > {};
+
+  struct plus_minus :
+    pegtl::sor<
+      TAOCPP_PEGTL_STRING( "+=" ),
+      TAOCPP_PEGTL_STRING( "-=" )
+    > {};
+
+  struct aop :
+    pegtl::sor<
+      plus_minus,
+      TAOCPP_PEGTL_STRING( "*=" ),
+      TAOCPP_PEGTL_STRING( "&=" )
+    > {};
+
+  struct sop :
+    pegtl::sor<
+      TAOCPP_PEGTL_STRING( "<<=" ),
+      TAOCPP_PEGTL_STRING( ">>=" )
+    > {};
+
+  struct cmp :
+    pegtl::sor<
+      pegtl::one< '<' >,
+      TAOCPP_PEGTL_STRING( "<=" ),
+      pegtl::one< '=' >
+    > {};
 
   struct E :
     pegtl::sor<
@@ -124,7 +174,8 @@ namespace L1 {
       pegtl::one< '8' >
     > {};
 
-  struct str_return : TAOCPP_PEGTL_STRING( "return" ) {};
+  struct M:
+    number {};
 
   struct seps:
     pegtl::star<
@@ -134,6 +185,24 @@ namespace L1 {
       >
     > {};
 
+  struct arrow: 
+    TAOCPP_PEGTL_STRING("<-")
+    {};
+
+  struct memxM:
+    pegtl::seq<
+      TAOCPP_PEGTL_STRING("mem"),
+      seps,
+      x,
+      seps,
+      M
+    >{};
+
+  struct dst_memxM:
+    memxM {};
+
+  struct str_return : TAOCPP_PEGTL_STRING( "return" ) {};
+
   struct Label_rule:
     label {};
 
@@ -142,9 +211,94 @@ namespace L1 {
       str_return
     > { };
 
+  struct s2w_assign_rule:
+    pegtl::seq<
+      dst_w,
+      seps,
+      arrow,
+      seps,
+      s
+    >{};
+
+  struct mem2w_assign_rule:
+    pegtl::seq<
+      dst_w,
+      seps,
+      arrow,
+      seps,
+      memxM
+    >{};
+
+  struct s2mem_assign_rule:
+    pegtl::seq<
+      dst_memxM,
+      seps,
+      arrow,
+      seps,
+      s
+    >{};
+
+  struct t2w_aop_rule:
+    pegtl::seq<
+      dst_w,
+      seps,
+      aop,
+      seps,
+      t
+    >{};
+
+  struct sx2w_sop_rule:
+    pegtl::seq<
+      dst_w,
+      seps,
+      sop,
+      seps,
+      sx
+    >{};
+
+  struct N2w_sop_rule:
+    pegtl::seq<
+      dst_w,
+      seps,
+      sop,
+      seps,
+      number
+    >{};
+
+  struct t2mem_aop_rule:
+    pegtl::seq<
+      dst_memxM,
+      seps,
+      plus_minus,
+      seps,
+      t
+    >{};
+
+  struct mem2w_aop_rule:
+    pegtl::seq<
+      dst_w,
+      seps,
+      plus_minus,
+      seps,
+      memxM
+    >{};
+
+  struct assign_rules: 
+    pegtl::sor<
+      pegtl::seq<pegtl::at<s2w_assign_rule>, s2w_assign_rule>,
+      pegtl::seq<pegtl::at<mem2w_assign_rule>, mem2w_assign_rule>,
+      pegtl::seq<pegtl::at<s2mem_assign_rule>, s2mem_assign_rule>,
+      pegtl::seq<pegtl::at<t2w_aop_rule>, t2w_aop_rule>,
+      pegtl::seq<pegtl::at<sx2w_sop_rule>, sx2w_sop_rule>,
+      pegtl::seq<pegtl::at<N2w_sop_rule>, N2w_sop_rule>,
+      pegtl::seq<pegtl::at<t2mem_aop_rule>, t2mem_aop_rule>,
+      pegtl::seq<pegtl::at<mem2w_aop_rule>, mem2w_aop_rule>
+    > {};
+
   struct Instruction_rule:
     pegtl::sor<
-      pegtl::seq< pegtl::at<Instruction_return_rule>            , Instruction_return_rule             >
+      pegtl::seq< pegtl::at<Instruction_return_rule>, Instruction_return_rule>,
+      pegtl::seq<pegtl::at<assign_rules>, assign_rules>
     > { };
 
   struct Instructions_rule:
@@ -211,13 +365,110 @@ namespace L1 {
     }
   };
 
+  template<> struct action < arrow > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto currentF = p.functions.back();
+      currentF->op = in.string();
+    }
+  };
+
+  template<> struct action < aop > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto currentF = p.functions.back();
+      currentF->op = in.string();
+    }
+  };
+
+  template<> struct action < plus_minus > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto currentF = p.functions.back();
+      currentF->op = in.string();
+    }
+  };
+
+  template<> struct action < sop > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto currentF = p.functions.back();
+      currentF->op = in.string();
+    }
+  };
+
+
+
+  template<> struct action < s > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto currentF = p.functions.back();
+      currentF->src = in.string();
+    }
+  };
+
+  // template<> struct action < w > {
+  //   template< typename Input >
+  // static void apply( const Input & in, Program & p){
+  //     auto currentF = p.functions.back();
+  //     currentF->w = in.string();
+  //   }
+  // };
+
+  template<> struct action < dst_w > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto currentF = p.functions.back();
+      currentF->dst = in.string();
+    }
+  };
+
+  template<> struct action < dst_memxM > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto currentF = p.functions.back();
+      currentF->dst = in.string();
+    }
+  };
+
+  template<> struct action < t > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto currentF = p.functions.back();
+      currentF->src = in.string();
+    }
+  };
+
+  template<> struct action < memxM > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto currentF = p.functions.back();
+      currentF->src = in.string();
+    }
+  };
+
+  template<> struct action < sx > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto currentF = p.functions.back();
+      currentF->src = in.string();
+    }
+  };
+
+  template<> struct action < number > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto currentF = p.functions.back();
+      currentF->src = in.string();
+    }
+  };
+
   template<> struct action < label > {
     template< typename Input >
 	static void apply( const Input & in, Program & p){
       if (p.entryPointLabel.empty()){
         p.entryPointLabel = in.string();
       } else {
-        abort();
       }
     }
   };
@@ -252,6 +503,67 @@ namespace L1 {
 	static void apply( const Input & in, Program & p){
       auto currentF = p.functions.back();
       auto i = new Instruction_ret();
+      currentF->instructions.push_back(i);
+    }
+  };
+
+  // template<> struct action < s2w_assign_rule > {
+  //   template< typename Input >
+  // static void apply( const Input & in, Program & p){
+  //     auto currentF = p.functions.back();
+  //     auto i = new Instruction_assign();
+  //     i->dst = currentF->dst;
+  //     i->src = currentF->s;
+  //     i->op = currentF->op;
+  //     currentF->instructions.push_back(i);
+  //   }
+  // };
+
+  // template<> struct action < mem2w_assign_rule > {
+  //   template< typename Input >
+  // static void apply( const Input & in, Program & p){
+  //     auto currentF = p.functions.back();
+  //     auto i = new Instruction_assign();
+  //     i->dst = currentF->dst;
+  //     i->src = currentF->memxM;
+  //     i->op = currentF->op;
+  //     currentF->instructions.push_back(i);
+  //   }
+  // };
+
+  // template<> struct action < s2mem_assign_rule > {
+  //   template< typename Input >
+  // static void apply( const Input & in, Program & p){
+  //     auto currentF = p.functions.back();
+  //     auto i = new Instruction_assign();
+  //     i->dst = currentF->dst;
+  //     i->src = currentF->s;
+  //     i->op = currentF->op;
+  //     currentF->instructions.push_back(i);
+  //   }
+  // };
+
+  // template<> struct action < t2w_aop_rule > {
+  //   template< typename Input >
+  // static void apply( const Input & in, Program & p){
+  //     auto currentF = p.functions.back();
+  //     auto i = new Instruction_assign();
+  //     i->dst = currentF->dst;
+  //     i->src = currentF->t;
+  //     i->op = currentF->op;
+  //     currentF->instructions.push_back(i);
+  //   }
+  // };
+
+
+  template<> struct action < assign_rules > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto currentF = p.functions.back();
+      auto i = new Instruction_assign();
+      i->dst = currentF->dst;
+      i->src = currentF->src;
+      i->op = currentF->op;
       currentF->instructions.push_back(i);
     }
   };

@@ -20,6 +20,12 @@ namespace L1 {
   struct Instruction_ret : Instruction{
   };
 
+  struct Instruction_assign : Instruction{
+    std::string dst;
+    std::string src;
+    std::string op;
+  };
+
   /*
    * Function.
    */
@@ -28,6 +34,15 @@ namespace L1 {
     int64_t arguments;
     int64_t locals;
     std::vector<Instruction *> instructions;
+    std::string w;
+    std::string s;
+    std::string memxM;
+    std::string op;
+    std::string t;
+    std::string sx;
+    std::string N;
+    std::string dst;
+    std::string src;
   };
 
   /*
