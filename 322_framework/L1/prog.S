@@ -23,47 +23,41 @@ go:
 
 
 _go:
-   movq $5, %rdi
-   call print  # runtime system call
-   movq %rdi, %r10
-   movq $11, %rdi
-   movq $0, %rsi
-   call allocate  # runtime system call
-   movq %rax, %r11
-   movq $_odd_num_1, -8(%rsp)
-   movq $2, %rdi
+   movq $10, %rdi
+   movq $2, %rsi
+   movq $_div_ret_1, -8(%rsp)
    subq $8, %rsp      # Allocate extra arguments on the stack as well as the return address 
-   jmp _odd_num        # Call to :odd_num
-_odd_num_1:
-   movq %rax, 8(%r11)
-   movq $5, 16(%r11)
-   movq $7, 24(%r11)
-   movq $9, 32(%r11)
-   movq $11, 40(%r11)
-   movq 8(%r11), %rsi
-   movq 16(%r11), %rdi
-   subq %rsi, %rdi
-   inc %rdi
-   addq 16(%r11), %rdi
-   movq 24(%r11), %rcx
-   salq %cl, %rdi
-   andq 32(%r11), %rdi
-   subq 40(%r11), %rdi
-   addq $3, %rdi
-   salq $1, %rdi
-   inc %rdi
+   jmp _easy_divisible        # Call to :easy_divisible
+_div_ret_1:
+   salq $1, %rax
+   inc %rax
+   movq %rax, %rdi
+   call print  # runtime system call
+   movq $10, %rdi
+   movq $3, %rsi
+   movq $_div_ret_2, -8(%rsp)
+   subq $8, %rsp      # Allocate extra arguments on the stack as well as the return address 
+   jmp _easy_divisible        # Call to :easy_divisible
+_div_ret_2:
+   salq $1, %rax
+   inc %rax
+   movq %rax, %rdi
    call print  # runtime system call
    ret
 
 
-_odd_num:
-   movq $1, %rax
-_start:
-   subq $1, %rdi
+_easy_divisible:
+   movq $1, %rsi
+_START:
    cmpq $0, %rdi
-   jle _done
-   addq $2, %rax
-   jmp _start
-_done:
+   je _DONE
+   subq %rsi, %rdi
+   cmpq $0, %rdi
+   jl _NOO
+   jmp _START
+_NOO:
+   movq $0, %rsi
+_DONE:
+   movq %rsi, %rax
    ret
 

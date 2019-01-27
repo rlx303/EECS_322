@@ -1,23 +1,53 @@
 (:go
   (:go
-    0 0
+      0 0
 
-    // This is my comment
-    return
-  )
+          // This is my comment
+	      return
+	        )
 
-  (:testFunction
-    1 2
-        
-    return
+		  (:testFunction
+		      1 2
+		              
+			          return
 
-    mem r10 72  -= rsp
+                rax <- :abc
+                rbx <- r10
+                rcx <- 25
+
+                rax <- mem rsp 0
+                rbx <- mem rsp 16
+                rcx <- mem r9 8
+
+                mem rsp 0 <- :abcd
+                mem rsp 0 <- rcx
+                mem rsp 8 <- 9999
+
+                rax += 10
+                rax -= r9
+                rax *= r15
+                rbx &= r15
+
+                rdi <<= rcx
+                rdi >>= rcx
+
+                rcx <<= rcx
+                rcx <<= 10000000
+
+                mem rsp 0 += rdi
+                mem rcx 0 -= rcx
+                mem rsp 8 += 9999
+
+                rdi += mem rsp 0
+                rcx -= mem rcx 0
+                rax += mem rsp 8                
+ 
 
 
 
-    
+				          
 
 
 
-  )
-)
+					    )
+					    )
