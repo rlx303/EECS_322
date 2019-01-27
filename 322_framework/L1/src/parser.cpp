@@ -203,10 +203,16 @@ namespace L1 {
 
   struct cmp :
     pegtl::sor<
-      pegtl::one< '<' >,
       TAOCPP_PEGTL_STRING( "<=" ),
+      pegtl::one< '<' >,
       pegtl::one< '=' >
     > {};
+
+  struct inc_dec:
+    pegtl::sor<
+      TAOCPP_PEGTL_STRING( "++" ),
+      TAOCPP_PEGTL_STRING( "--" )
+    >{};
 
   struct seps:
     pegtl::star<
@@ -229,10 +235,20 @@ namespace L1 {
 
   struct str_return : TAOCPP_PEGTL_STRING( "return" ) {};
 
-  struct Instruction_return_rule:
+  struct instruction_label_rule:
+    label {};
+
+  struct instruction_return_rule:
     pegtl::seq<
       str_return
-    > { };
+    > {};
+
+  struct instruction_goto_rule:
+    pegtl::seq<
+      TAOCPP_PEGTL_STRING("goto"),
+      seps, 
+      Label_rule
+    > {};
 
   struct s2w_assign_rule:
     pegtl::seq<
@@ -306,6 +322,13 @@ namespace L1 {
       memxM
     >{};
 
+  struct inc_dec_rule:
+    pegtl::seq<
+      w_rule,
+      seps,
+      inc_dec
+    >{};
+
   struct two_operand_rule: 
     pegtl::sor<
       pegtl::seq<pegtl::at<s2w_assign_rule>, s2w_assign_rule>,
@@ -318,10 +341,27 @@ namespace L1 {
       pegtl::seq<pegtl::at<mem2w_aop_rule>, mem2w_aop_rule>
     > {};
 
+  struct cmp_rule:
+    pegtl::seq<
+      w_rule,
+      seps,
+      arrow,
+      seps,
+      t,
+      seps,
+      cmp,
+      seps,
+      t
+    >{};
+
   struct Instruction_rule:
     pegtl::sor<
-      pegtl::seq< pegtl::at<Instruction_return_rule>, Instruction_return_rule>,
-      pegtl::seq<pegtl::at<two_operand_rule>, two_operand_rule>
+      pegtl::seq<pegtl::at<cmp_rule>, cmp_rule>,
+      pegtl::seq<pegtl::at<instruction_return_rule>, instruction_return_rule>,
+      pegtl::seq<pegtl::at<two_operand_rule>, two_operand_rule>,
+      pegtl::seq<pegtl::at<inc_dec_rule>, inc_dec_rule>,
+      pegtl::seq<pegtl::at<instruction_label_rule>, instruction_label_rule>,
+      pegtl::seq<pegtl::at<instruction_goto_rule>, instruction_goto_rule>
     > { };
 
   struct Instructions_rule:
@@ -415,7 +455,21 @@ namespace L1 {
     }
   };
 
+  template<> struct action < inc_dec > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto i = new I_inc_dec(in.string());
+      parsed_registers.push_back(i);
+    }
+  };
 
+  template<> struct action < cmp > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto i = new I_cmp(in.string());
+      parsed_registers.push_back(i);
+    }
+  };
 
 //``````````````````` items rules
   template<> struct action < M > {
@@ -448,7 +502,7 @@ namespace L1 {
   template<> struct action < sx_rule > {
     template< typename Input >
   static void apply( const Input & in, Program & p){
-      auto i = new I_reg(in.string());
+      auto i = new I_reg(reg_map[in.string()]);
       parsed_registers.push_back(i);
     }
   };
@@ -526,11 +580,32 @@ namespace L1 {
     }
   };
 
+  template<> struct action < instruction_label_rule > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto currentF = p.functions.back();
+      auto i = new Instruction_label();
+      i->label = new I_label(in.string());
+      currentF->instructions.push_back(i);
+    }
+  };
+
+  template<> struct action < instruction_goto_rule > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto currentF = p.functions.back();
+      auto i = new Instruction_goto();
+      i->label = parsed_registers.back();
+      parsed_registers.pop_back();
+      currentF->instructions.push_back(i);
+    }
+  };
+
   template<> struct action < two_operand_rule > {
     template< typename Input >
   static void apply( const Input & in, Program & p){
       auto currentF = p.functions.back();
-      auto ins = new Instruction_s2w_assign();
+      auto ins = new Instruction_assign();
       ins->src = parsed_registers.back();
       parsed_registers.pop_back();
       ins->op = parsed_registers.back();
@@ -540,6 +615,39 @@ namespace L1 {
       currentF->instructions.push_back(ins);
     }
   };
+
+  template<> struct action < inc_dec_rule > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto currentF = p.functions.back();
+      auto ins = new Instruction_inc_dec();
+      ins->op = parsed_registers.back();
+      parsed_registers.pop_back();
+      ins->dst = parsed_registers.back();
+      parsed_registers.pop_back();
+      currentF->instructions.push_back(ins);
+    }
+  };
+
+  template<> struct action < cmp_rule > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto currentF = p.functions.back();
+      auto ins = new Instruction_cmp();
+      ins->t2 = parsed_registers.back();
+      parsed_registers.pop_back();
+      ins->cmp = parsed_registers.back();
+      parsed_registers.pop_back();
+      ins->t1 = parsed_registers.back();
+      parsed_registers.pop_back();
+      ins->op = parsed_registers.back();
+      parsed_registers.pop_back();
+      ins->dst = parsed_registers.back();
+      parsed_registers.pop_back();
+      currentF->instructions.push_back(ins);
+    }
+  };
+
 
   Program parse_file (char *fileName){
 

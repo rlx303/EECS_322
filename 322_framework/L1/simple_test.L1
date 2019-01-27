@@ -13,10 +13,10 @@
 
                 rax <- :abc
                 rbx <- r10
-                rcx <- 25
+                rcx <- -25
 
                 rax <- mem rsp 0
-                rbx <- mem rsp 16
+                rbx <- mem rsp -16
                 rcx <- mem r9 8
 
                 mem rsp 0 <- :abcd
@@ -29,18 +29,39 @@
                 rbx &= r15
 
                 rdi <<= rcx
-                rdi >>= rcx
+                rdi >>= 10
 
-                rcx <<= rcx
-                rcx <<= 10000000
+                rcx <<= 2
+                rcx <<= -10000000
 
                 mem rsp 0 += rdi
                 mem rcx 0 -= rcx
                 mem rsp 8 += 9999
 
-                rdi += mem rsp 0
+                rdi += mem rsp -8
                 rcx -= mem rcx 0
-                rax += mem rsp 8                
+                rax += mem rsp 8 
+
+                rax --     
+                rdi++         
+
+                rax <- 10 <= rax
+                rdi <- rax <= 10
+                rdi <- 10 <= 11
+                rax <- -12 <= 11
+                rax <- -11 = -11
+                rax <- 11 = -13
+
+                :a_label
+
+                :b_label
+
+
+                goto :a_label
+
+                :c_label
+
+                goto :b_lable
  
 
 
