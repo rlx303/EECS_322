@@ -29,12 +29,17 @@ extern std::map<std::string, std::string> reg_map;
 
     virtual std::string get_L1() { return data; }
     virtual std::string get_x86() { return ""; }
+    virtual bool is_int() {return false;}
   };
 
   struct I_num : Item {
     I_num(std::string input) :Item(input) {}
     std::string get_x86() override {
       return "$" + data;
+    }
+
+    bool is_int() override {
+      return true;
     }
   };
 
@@ -50,6 +55,13 @@ extern std::map<std::string, std::string> reg_map;
     I_reg(std::string input) :Item(input) {}
     std::string get_x86() override {
       return "%" + data;
+    }
+  };
+
+  struct I_sx : Item {
+    I_sx(std::string input) :Item(input) {}
+    std::string get_x86() override {
+      return "%" + reg_map[data];
     }
   };
 
@@ -133,11 +145,14 @@ extern std::map<std::string, std::string> reg_map;
    * Instructions.
    */
   struct Instruction_ret : Instruction{
+    int64_t arguments;
+    int64_t locals;
     std::string print_L1() override {
       return "return";
     }
     std::string print_x86() override {
-      return "retq";
+      int64_t offset = (arguments<=6) ? locals*8 : (arguments-6)*8+locals*8;
+      return "addq $" + std::to_string(offset) + ", %rsp\n" + "retq";
     }
   };
 
@@ -195,13 +210,9 @@ extern std::map<std::string, std::string> reg_map;
       t1->get_L1() + " " + cmp->get_L1() + " " + t2->get_L1();
     }
     std::string print_x86() override {
-      char *t1_string = const_cast<char*>(t1->get_L1().c_str());
-      char *t2_string = const_cast<char*>(t2->get_L1().c_str());
-      char* p1;
-      long int t1_val = strtol(t1_string, &p1, 10);
       std::string reg = "%" + reg_map[dst->get_L1()];
       std::string cmp_sign = cmp->get_L1();
-      if (*p1) { //t1 is not number
+      if (!t1->is_int()) { //t1 is not number
         std::string set;
         if (cmp_sign=="<") {
           set = "setl";
@@ -213,9 +224,7 @@ extern std::map<std::string, std::string> reg_map;
         return "cmpq " + t2->get_x86() + ", " + t1->get_x86() + "\n" + 
         set + " " + reg + "\n" + "movzbq " + reg + ", " + dst->get_x86();
       } else { //t1 is number
-        char* p2;
-        long int t2_val = strtol(t2_string, &p2, 10);
-        if (*p2) { //t2 is not number
+        if (!t2->is_int()) { //t2 is not number
           std::string set;
           if (cmp_sign=="<") {
             set = "setg";
@@ -227,6 +236,8 @@ extern std::map<std::string, std::string> reg_map;
           return "cmpq " + t1->get_x86() + ", " + t2->get_x86() + "\n" + 
           set + " " + reg + "\n" + "movzbq " + reg + ", " + dst->get_x86();
         } else { //t2 is also number
+            int t1_val = stoi(t1->get_L1());
+            int t2_val = stoi(t2->get_L1());
             std::string move_1 = "movq $1, " + dst->get_x86();
             std::string move_0 = "movq $0, " + dst->get_x86();
             if (cmp_sign=="<") {
@@ -239,6 +250,163 @@ extern std::map<std::string, std::string> reg_map;
           }
       }
       return "";
+    }
+  };
+
+  struct Instruction_two_label_jump : Instruction {
+    Item* t1;
+    Item* cmp;
+    Item* t2;
+    Item* label1;
+    Item* label2; 
+    std::string print_L1() override {
+      return "cjump " + t1->get_L1() + " " + cmp->get_L1() + " " + 
+      t2->get_L1() + " " + label1->get_L1() + " " + label2->get_L1();
+    }
+
+    std::string print_x86() override {
+      std::string cmp_sign = cmp->get_L1();
+      std::string label1_x86 = label1->get_L1().replace(0, 1, "_");
+      std::string label2_x86 = label2->get_L1().replace(0, 1, "_");
+      if (!t1->is_int()) { //t1 is not number
+        std::string jmp;
+        if (cmp_sign=="<") {
+          jmp = "jl";
+        } else if (cmp_sign=="<=") {
+          jmp = "jle";
+        } else {
+          jmp = "je";
+        }
+        return "cmpq " + t2->get_x86() + ", " + t1->get_x86() + "\n" + 
+        jmp + " " + label1_x86 + "\n" + 
+        "jmp " + label2_x86;
+      } 
+      else { //t1 is number
+        if (!t2->is_int()) { //t2 is not number
+          std::string jmp;
+          if (cmp_sign=="<") {
+            jmp = "jg";
+          } else if (cmp_sign=="<=") {
+            jmp = "jge";
+          } else {
+            jmp = "je";
+          }
+        return "cmpq " + t1->get_x86() + ", " + t2->get_x86() + "\n" + 
+        jmp + " " + label1_x86 + "\n" + 
+        "jmp " + label2_x86;
+        } 
+        else { //t2 is also number
+          int t1_val = stoi(t1->get_L1());
+          int t2_val = stoi(t2->get_L1());
+          std::string jmp_1 = "jmp " + label1_x86;
+          std::string jmp_2 = "jmp " + label2_x86;
+          if (cmp_sign=="<") {
+            return (t1_val < t2_val) ? jmp_1 : jmp_2;
+          } else if (cmp_sign=="<=") {
+            return (t1_val <= t2_val) ? jmp_1 : jmp_2;
+          } else {
+            return (t1_val == t2_val) ? jmp_1 : jmp_2;
+          }
+        }
+      }
+    }
+  };
+
+
+  struct Instruction_one_label_jump : Instruction {
+    Item* t1;
+    Item* cmp;
+    Item* t2;
+    Item* label1;
+    std::string print_L1() override {
+      return "cjump " + t1->get_L1() + " " + cmp->get_L1() + " " + 
+      t2->get_L1() + " " + label1->get_L1();
+    }
+
+    std::string print_x86() override {
+      std::string cmp_sign = cmp->get_L1();
+      std::string label1_x86 = label1->get_L1().replace(0, 1, "_");
+      if (!t1->is_int()) { //t1 is not number
+        std::string jmp;
+        if (cmp_sign=="<") {
+          jmp = "jl";
+        } else if (cmp_sign=="<=") {
+          jmp = "jle";
+        } else {
+          jmp = "je";
+        }
+        return "cmpq " + t2->get_x86() + ", " + t1->get_x86() + "\n" + 
+        jmp + " " + label1_x86;
+      } 
+      else { //t1 is number
+        if (!t2->is_int()) { //t2 is not number
+          std::string jmp;
+          if (cmp_sign=="<") {
+            jmp = "jg";
+          } else if (cmp_sign=="<=") {
+            jmp = "jge";
+          } else {
+            jmp = "je";
+          }
+        return "cmpq " + t1->get_x86() + ", " + t2->get_x86() + "\n" + 
+        jmp + " " + label1_x86;
+        } 
+        else { //t2 is also number
+          int t1_val = stoi(t1->get_L1());
+          int t2_val = stoi(t2->get_L1());
+          std::string jmp_1 = "jmp " + label1_x86;
+          if (cmp_sign=="<") {
+            return (t1_val < t2_val) ? jmp_1 : "";
+          } else if (cmp_sign=="<=") {
+            return (t1_val <= t2_val) ? jmp_1 : "";
+          } else {
+            return (t1_val == t2_val) ? jmp_1 : "";
+          }
+        }
+      }
+    }  
+  };
+
+  struct Instruction_wwe : Instruction{
+    Item* dst;
+    Item* w1;
+    Item* w2;
+    Item* E;
+    std::string print_L1() override {
+      return dst->get_L1() + " @ " + w1->get_L1() + " " + w2->get_L1() + " " + E->get_L1();
+    }
+    std::string print_x86() override {
+      return "lea (" + w1->get_x86() + ", " + w2->get_x86() + ", " + E->get_L1() + "), " 
+      + dst->get_x86();
+    }
+  };
+
+  struct Instruction_call : Instruction{
+    Item* label;
+    Item* arg_num;
+    std::string print_L1() override {
+      return "call " + label->get_L1() + " " + arg_num->get_L1();
+    }
+    std::string print_x86() override {
+      std::string l = label->get_L1();
+      std::string f = (l.at(0)==':') ? l.replace(0, 1, "_") : "*%"+l;
+      int n = stoi(arg_num->get_L1());
+      std::string offset = (n<=6) ? "8" : std::to_string((n-5)*8);
+      return "subq $" + offset + ", " + "%rsp" + "\n" +
+      "jmp " + f;
+    }
+  };
+
+
+  struct Instruction_runtime : Instruction{
+    std::string name;
+    std::string arg_num;
+    std::string print_L1() override {
+      return "call " + name + " " + arg_num;
+    }
+    std::string print_x86() override {
+      std::string f = (name == "array-error") ? "array_error" : name;
+      return "call " + f;
     }
   };
   /*

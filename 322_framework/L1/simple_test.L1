@@ -32,7 +32,7 @@
                 rdi >>= 10
 
                 rcx <<= 2
-                rcx <<= -10000000
+                rcx <<= 100
 
                 mem rsp 0 += rdi
                 mem rcx 0 -= rcx
@@ -52,7 +52,6 @@
                 rax <- -11 = -11
                 rax <- 11 = -13
 
-                :a_label
 
                 :b_label
 
@@ -62,6 +61,35 @@
                 :c_label
 
                 goto :b_lable
+
+                cjump rax <= rcx :a_label :b_label
+                cjump 10 <= rbx :c_label :d_label
+                cjump rcx <= 11 :e_label :f_label
+                cjump -10 <= 3 :g_label :h_label
+
+
+                cjump -10 <= 3 :g_label
+                cjump -10 <= -25 :c_label
+                cjump rcx <= 11 :e_label
+                cjump 12 <= rbx :d_label
+
+                rax @ rdi rsi 1
+
+                call print 1
+                call allocate 2
+                call array-error 2
+
+                call :labellll 4
+                call :labell8 8
+
+                call rdi 0
+
+                call rax 9
+
+
+
+
+
  
 
 

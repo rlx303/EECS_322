@@ -31,18 +31,44 @@ namespace L1{
     /* 
      * Open the output file.
      */ 
-    std::ofstream outputFile;
-    outputFile.open("prog.S");
-   
-    /* 
-     * Generate target code
-     */ 
-    //TODO
+    std::ofstream of;
+    of.open("prog.S");
+    
+    std::string tab = "    ";
+    of << ".text\n";
+    of << ".globl go\n";
+    of << "go:\n";
+    of << "# save callee-saved registers\n";
+    of << "pushq %rbx\n";
+    of << "pushq %rbp\n";
+    of << "pushq %r12\n";
+    of << "pushq %r13\n";
+    of << "pushq %r14\n";
+    of << "pushq %r15\n\n";
+
+    of << "call " << p.entryPointLabel.replace(0, 1, "_") << '\n';
+
+    of <<"# restore callee-saved registers and return\n";
+    of << "popq %r15\n";
+    of << "popq %r14\n";
+    of << "popq %r13\n";
+    of << "popq %r12\n";
+    of << "popq %rbp\n";
+    of << "popq %rbx\n";
+    of << "retq\n";
+
+    for (auto f : p.functions){    
+        of << f->name.replace(0, 1, "_") << ":\n";
+        of << "subq $" << f->locals*8 << ", %rsp #Allocate locals\n";
+        for (auto i : f->instructions) {
+            of << i->print_x86() << "\n";
+        }
+    }
 
     /* 
      * Close the output file.
      */ 
-    outputFile.close();
+    of.close();
    
     return ;
   }
