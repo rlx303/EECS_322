@@ -26,7 +26,7 @@ int main(
   int argc, 
   char **argv
   ){
-  auto enable_code_generator = false;
+  auto enable_code_generator = true;
   int32_t optLevel = 0;
   bool verbose;
 
@@ -91,7 +91,7 @@ int main(
   /*
    * Generate x86_64 assembly.
    */
-  if (true){
+  if (enable_code_generator){
     L1::generate_code(p);
   }
 
