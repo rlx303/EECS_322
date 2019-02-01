@@ -1,0 +1,97 @@
+//(:go
+//  (:go
+//      0 0
+
+          // This is my comment
+//	      return
+//	        )
+
+		  (:testFunction
+		      1 2
+		              
+			          return
+
+                %var1 <- :abc
+                rbx <- r10
+                rcx <- -25
+
+                rax <- mem %varm 0
+                %vars <- mem rsp -16
+                rcx <- mem r9 8
+
+                mem rsp 0 <- :abcd
+                mem %varrr 0 <- rcx
+                mem %wanerrr 8 <- 9999
+
+                rax += 10
+                %varx -= r9
+                rax *= r15
+                %asdflk &= r15
+
+                rdi <<= rcx
+                rdi >>= 10
+
+                rcx <<= 2
+                %sddk <<= 100
+
+                mem rsp 0 += %qaqa
+                mem rcx 0 -= rcx
+                mem %woeir 8 += 9999
+
+                rdi += mem %cmcmc -8
+                rcx -= mem rcx 0
+                %dmvc += mem rsp 8 
+
+                %eeee --     
+                rdi++         
+
+                rax <- 10 <= %vnxm
+                rdi <- %cjckx <= 10
+                rdi <- 10 <= 11
+                %dkwn <- -12 <= 11
+                rax <- -11 = -11
+                %ekwlekf <- 11 = -13
+
+
+                :b_label
+
+
+                goto :a_label
+
+                :c_label
+
+                goto :b_lable
+
+                cjump %wlj <= rcx :a_label :b_label
+                cjump 10 <= %kelv :c_label :d_label
+                cjump rcx <= 11 :e_label :f_label
+                cjump -10 <= 3 :g_label :h_label
+
+
+                cjump -10 <= 3 :g_label
+                cjump -10 <= -25 :c_label
+                cjump %kdlscn <= 11 :e_label
+                cjump 12 <= rbx :d_label
+
+                %kelr @ %kcjc %dknvc 1
+
+                call print 1
+                call allocate 2
+                call array-error 2
+
+                call %klejkv 4
+                call :labell8 8
+
+                call rdi 0
+
+                call %jkldkf 9
+
+
+
+                %abc <- stack-arg 8
+                %ckv <- stack-arg 0				          
+
+
+
+					    )
+					    //)
