@@ -3,11 +3,11 @@
 #include <fstream>
 #include <algorithm>
 #include <set>
+#include <map>
 #include <iterator>
 
 #include <code_generator.h>
-
-using namespace std;
+#include <utils.h>
 
 namespace L2{
 
@@ -58,65 +58,7 @@ namespace L2{
     return ;
   }
 
-
-  std::set<std::string> set_diff(std::set<std::string> first, std::set<std::string> second){
-    std::set<std::string> diff;
-    std::set_difference(first.begin(), first.end(), second.begin(), second.end(), std::inserter(diff, diff.begin()));
-    return diff;
-  }
-
-  std::set<std::string> set_u(std::set<std::string> first, std::set<std::string> second){
-    std::set<std::string> u;
-    std::set_union(first.begin(), first.end(), second.begin(), second.end(), std::inserter(u, u.begin()));
-    return u;
-  }
-
-  std::vector<Instruction*> find_successors(std::vector<Instruction*>::iterator& ins, std::vector<Instruction*>& instructions) {
-    std::vector<Instruction*> ret;
-    if (dynamic_cast<Instruction_ret*>(*ins)) {
-        return ret;
-    }
-    else if (auto g = dynamic_cast<Instruction_goto*>(*ins)) {
-        for (auto& i : instructions) {
-            if (auto l = dynamic_cast<Instruction_label*>(i)) {
-                if (l->label->data == g->label->data) {
-                    ret.push_back(i);
-                    return ret;
-                }
-            }
-        }
-    }
-    else if (auto c1 = dynamic_cast<Instruction_one_label_jump*>(*ins)) {
-        for (auto& i : instructions) {
-            if (auto l = dynamic_cast<Instruction_label*>(i)) {
-                if (l->label->data == c1->label1->data) {
-                    ret.push_back(i);
-                    ret.push_back(*(ins+1));
-                    return ret;
-                }
-            }
-        }    
-    }
-    else if (auto c2 = dynamic_cast<Instruction_two_label_jump*>(*ins)) {
-        for (auto& i : instructions) {
-            if (auto l = dynamic_cast<Instruction_label*>(i)) {
-                if (l->label->data == c2->label1->data) {
-                    ret.push_back(i);
-                }
-                if (l->label->data == c2->label2->data) {
-                    ret.push_back(i);
-                }
-            }
-        }
-        return ret;
-    }
-
-    ret.push_back(*(ins+1));
-    return ret;
-  }
-
-  void generate_in_out(Program p){
-    auto f = p.functions.back();
+  void generate_in_out(Function* f){
     bool changed = false;
     do{
         changed = false;
@@ -127,7 +69,7 @@ namespace L2{
                 (*it)->in = new_in;
             }
             std::set<std::string> new_out;
-            std::vector<Instruction*> succs = find_successors(it, f->instructions);
+            std::vector<Instruction*> succs = find_successors(it, f->instructions.end(), f->instructions);
             for (auto suc : succs) {
                 std::set<std::string> merged = set_u(new_out, suc->in);
                 new_out = merged;
@@ -140,4 +82,56 @@ namespace L2{
     }while(changed);
   }
 
+  std::map<std::string, std::set<std::string>> generate_interference_graph(Function* f){
+    std::map<std::string, std::set<std::string>> ig;
+
+    //Initialize with all GP regs
+    for (const auto &pair1 : reg_map) {
+        for (const auto &pair2 : reg_map) {
+            ig_insert(ig, pair1.first, pair2.first);
+        }
+    }
+
+    for (const auto &i : f->instructions) {
+        ig_connect(ig, i->in, i->in);
+        ig_connect(ig, i->out, i->out);
+        if (!skip_kill_out(i)) {
+            ig_connect(ig, i->get_kill(), i->out);
+        } else {
+            ig_init_set(ig, i->get_kill());
+        }
+        sop_constraint(i, ig);
+    }
+    return ig;
+  }
+
+  void spill(Function* f, std::string var, std::string prefix) {
+    std::vector<Instruction *> new_instructions = std::vector<Instruction *>();
+    int count = 0;
+    int offset = 8 * f->locals;
+    bool found_var = false;
+    for (auto i : f->instructions) {
+        if (ins_contains(i, var)) {
+            found_var = true;
+            std::string spilled_var = prefix + std::to_string(count);
+            if (i->get_gen().count(var) > 0) {
+                auto gg = read_mem_ins(spilled_var, offset);
+                new_instructions.push_back(gg);
+            }
+            new_instructions.push_back(ins_replace(i, var, spilled_var));
+            if (i->get_kill().count(spilled_var) > 0) {
+                new_instructions.push_back(write_mem_ins(spilled_var, offset));
+            }
+            count++;
+        }
+        else {
+            new_instructions.push_back(i);
+        }
+    }
+    f->instructions = new_instructions;
+    if (found_var) {
+        f->locals++;
+    }
+    return;
+  }
 }

@@ -5,4 +5,5 @@
 namespace L2{
   Program parse_file (char *fileName);
   Program parse_function (char *fileName);
+  Program parse_spill_test (char *filename);
 }

@@ -74,6 +74,9 @@ namespace L2 {
   struct function_name:
     label {};
 
+  struct spill_function_name:
+    label {};
+
   struct argument_number:
     number {};
 
@@ -330,6 +333,15 @@ namespace L2 {
       rcx_shift
     >{};
 
+  struct var2w_sop_rule:
+    pegtl::seq<
+      w_rule,
+      seps,
+      sop,
+      seps,
+      var
+    >{};
+
   struct N2w_sop_rule:
     pegtl::seq<
       w_rule,
@@ -372,6 +384,7 @@ namespace L2 {
       pegtl::seq<pegtl::at<s2mem_assign_rule>, s2mem_assign_rule>,
       pegtl::seq<pegtl::at<rcx2w_sop_rule>, rcx2w_sop_rule>,
       pegtl::seq<pegtl::at<N2w_sop_rule>, N2w_sop_rule>,
+      pegtl::seq<pegtl::at<var2w_sop_rule>, var2w_sop_rule>,
       pegtl::seq<pegtl::at<t2mem_aop_rule>, t2mem_aop_rule>,
       pegtl::seq<pegtl::at<mem2w_aop_rule>, mem2w_aop_rule>,
       pegtl::seq<pegtl::at<stack2w_assign_rule>, stack2w_assign_rule>
@@ -513,6 +526,21 @@ namespace L2 {
       pegtl::one< ')' >
     > {};
 
+  struct Spill_function_rule:
+    pegtl::seq<
+      pegtl::one< '(' >,
+      seps,
+      spill_function_name,
+      seps,
+      argument_number,
+      seps,
+      local_number,
+      seps,
+      Instructions_rule,
+      seps,
+      pegtl::one< ')' >
+    > {};
+
   struct Functions_rule:
     pegtl::plus<
       seps,
@@ -548,6 +576,17 @@ namespace L2 {
   struct one_function_grammar :
     pegtl::must<
     function_entry_rule
+    > {};
+
+  struct spill_test_grammar :
+    pegtl::must<
+      pegtl::seq<
+        Spill_function_rule,
+        seps,
+        var,
+        seps,
+        var
+      >
     > {};
 
   /*
@@ -723,6 +762,27 @@ namespace L2 {
       auto newF = new Function();
       newF->name = in.string();
       p.functions.push_back(newF);
+    }
+  };
+
+  template<> struct action < spill_function_name > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto newF = new Spill_function();
+      newF->name = in.string();
+      p.functions.push_back(newF);
+    }
+  };
+
+  template<> struct action < spill_test_grammar > {
+    template< typename Input >
+  static void apply( const Input & in, Program & p){
+      auto f = (Spill_function *) p.functions.back();
+      f->prefix = parsed_registers.back()->data;
+      parsed_registers.pop_back();
+      f->var = parsed_registers.back()->data;
+      parsed_registers.pop_back();
+      p.functions.push_back(f);
     }
   };
 
@@ -953,5 +1013,23 @@ namespace L2 {
 
     return p;
   }
+
+  Program parse_spill_test (char *fileName){
+
+    /*
+     * Check the grammar for some possible issues.
+     */
+    pegtl::analyze< spill_test_grammar >();
+
+    /*
+     * Parse.
+     */
+    file_input< > fileInput(fileName);
+    Program p;
+    parse< spill_test_grammar, action >(fileInput, p);
+
+    return p;
+  }
+
 
 }

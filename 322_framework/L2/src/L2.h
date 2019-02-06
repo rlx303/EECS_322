@@ -20,6 +20,7 @@ extern std::map<std::string, std::string> reg_map;
     virtual bool is_mem() {return false;}
     virtual bool is_arrow() {return false;}
     virtual bool is_label() {return false;}
+    virtual bool is_sop() {return false;}
   };
 
   struct I_num : Item {
@@ -55,7 +56,7 @@ extern std::map<std::string, std::string> reg_map;
   struct I_var : Item {
     I_var(std::string input) :Item(input) {}
     std::string get_x86() override {
-      return data; //////////////////////////////////////////////////
+      return data;
     }
     bool is_var() override {
       return true;
@@ -103,6 +104,9 @@ extern std::map<std::string, std::string> reg_map;
   struct I_sop : Item {
     I_sop(std::string input) :Item(input) {}
     std::string get_x86() override;
+    bool is_sop() override {
+      return true;
+    }
   };
 
   struct I_cmp : Item {
@@ -306,6 +310,11 @@ extern std::map<std::string, std::string> reg_map;
     int64_t arguments;
     int64_t locals;
     std::vector<Instruction *> instructions;
+  };
+
+  struct Spill_function : Function{
+    std::string var;
+    std::string prefix;
   };
 
   /*

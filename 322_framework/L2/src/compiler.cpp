@@ -18,7 +18,8 @@
 #include <code_generator.h>
 //#include <spiller.h>
 //#include <register_allocation.h>
-//#include <utils.h>
+#include <utils.h>
+#include <L2.h>
 
 using namespace std;
 
@@ -117,12 +118,16 @@ int main(
    * Special cases.
    */
   if (spill_only){
+    auto p = L2::parse_spill_test(argv[optind]);
+    auto f = (L2::Spill_function*) p.functions.back();
+    spill(f, f->var, f->prefix);
+    cout << '(' << f->name << endl;
+    cout << '\t' << f->arguments << ' ' << f->locals << endl;
 
-    /*
-     * Spill.
-     */
-     //TODO
-
+    for (auto& i : f->instructions) {
+      cout << '\t' << i->print_L2() << endl;
+    }
+    cout << ')' << endl;
     return 0;
   }
 
@@ -130,38 +135,45 @@ int main(
    * Liveness test.
    */
   if (liveness_only){
-    //TODO
     auto p = L2::parse_function(argv[optind]);
-
-    generate_in_out(p);
-    for (auto& f : p.functions) {
-      cout << "(" << endl;
-      cout << "(in" << endl;
-      for (auto& i : f->instructions) {
-        cout << "(";
-        for (auto& s : i->in) {
-          cout << s << " ";
-        }
-        cout << ")\n";
+    auto f = p.functions.back();
+    generate_in_out(f);
+    cout << "(" << endl;
+    cout << "(in" << endl;
+    for (auto& i : f->instructions) {
+      cout << "(";
+      for (auto& s : i->in) {
+        cout << L2::remove_percentage(s) << " ";
       }
-      cout << ")\n\n";
-      cout << "(out" << endl;
-      for (auto& i : f->instructions) {
-        cout << "(";
-        for (auto& s : i->out) {
-          cout << s << " ";
-        }
-        cout << ")\n";
-      }
-      cout << ")\n\n)\n";
+      cout << ")\n";
     }
+    cout << ")\n\n";
+    cout << "(out" << endl;
+    for (auto& i : f->instructions) {
+      cout << "(";
+      for (auto& s : i->out) {
+        cout << L2::remove_percentage(s) << " ";
+      }
+      cout << ")\n";
+    }
+    cout << ")\n\n)\n";
   }
 
   /*
    * Interference graph test.
    */
   if (interference_only){
-    //TODO
+    auto p = L2::parse_function(argv[optind]);
+    auto f = p.functions.back();
+    generate_in_out(f);
+    auto ig = generate_interference_graph(f);
+    for (auto const& ig_entry : ig) {
+      cout << L2::remove_percentage(ig_entry.first) << ' ';
+      for (auto const& edge : ig_entry.second){
+        cout << L2::remove_percentage(edge) << ' ';
+      }
+      cout << '\n';
+    }
     return 0;
   }
 

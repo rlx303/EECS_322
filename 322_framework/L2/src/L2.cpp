@@ -29,15 +29,6 @@ namespace L2 {
   		"rdi", "rsi", "rdx", "rcx", "r8", "r9"
   	};
 
-  	std::string remove_percentage(std::string v) {
-  		if (v.at(0)=='%') {
-  			return v.erase(0, 1);
-  		}
-  		else {
-  			return v;
-  		}
-  	}
-
   	std::string I_aop::get_x86()  {
       if (data == "+=") {
         return "addq";
@@ -227,7 +218,7 @@ namespace L2 {
         }
       }
       else if (t1->is_var()) {
-        gen.insert(remove_percentage(t1_string));
+        gen.insert(t1_string);
       }
 
       if (t2->is_reg()) {
@@ -236,7 +227,7 @@ namespace L2 {
         }
       }
       else if (t2->is_var()) {
-        gen.insert(remove_percentage(t2_string));
+        gen.insert(t2_string);
       }
       return gen;
     }
@@ -251,7 +242,7 @@ namespace L2 {
         }
       }
       else if (t1->is_var()) {
-        gen.insert(remove_percentage(t1_string));
+        gen.insert(t1_string);
       }
 
       if (t2->is_reg()) {
@@ -260,7 +251,7 @@ namespace L2 {
         }
       }
       else if (t2->is_var()) {
-        gen.insert(remove_percentage(t2_string));
+        gen.insert(t2_string);
       }
       return gen;
     }
@@ -275,7 +266,7 @@ namespace L2 {
         }
       }
       else if (t1->is_var()) {
-        gen.insert(remove_percentage(t1_string));
+        gen.insert(t1_string);
       }
 
       if (t2->is_reg()) {
@@ -284,7 +275,7 @@ namespace L2 {
         }
       }
       else if (t2->is_var()) {
-        gen.insert(remove_percentage(t2_string));
+        gen.insert(t2_string);
       }
       return gen;
     }
@@ -292,11 +283,8 @@ namespace L2 {
     std::set<std::string> Instruction_cmp::get_kill() { //
       std::set<std::string> kill;
       std::string dst_string = dst->get_L2();
-      if (dst->is_reg()) {
+      if (dst->is_reg() || dst->is_var()) {
         kill.insert(dst_string);
-      }
-      else if (dst->is_var()) {
-        kill.insert(remove_percentage(dst_string));
       }
       return kill;
     }
@@ -322,7 +310,7 @@ namespace L2 {
         }
       }
       else if (src->is_var()) {
-        gen.insert(remove_percentage(src_string));
+        gen.insert(src_string);
       }
       else if (src->is_mem()) {
         if (src->data != "rsp") {
@@ -336,11 +324,8 @@ namespace L2 {
         }      
       }
       else if (!op->is_arrow()) {
-	      if (dst->is_reg()) {
+	      if (dst->is_reg() || dst->is_var()) {
 	         gen.insert(dst->data);
-	      }
-	      else if (dst->is_var()) {
-	        gen.insert(remove_percentage(dst->data));
 	      }
       }
       return gen;
@@ -349,11 +334,8 @@ namespace L2 {
     std::set<std::string> Instruction_assign::get_kill() {
       std::set<std::string> kill;
       std::string dst_string = dst->get_L2();
-      if (dst->is_reg()) {
+      if (dst->is_reg() || dst->is_var()) {
         kill.insert(dst_string);
-      }
-      else if (dst->is_var()) {
-        kill.insert(remove_percentage(dst_string));
       }
       return kill;
     }
@@ -361,35 +343,22 @@ namespace L2 {
     std::set<std::string> Instruction_inc_dec::get_gen() {
       std::set<std::string> gen;
       std::string dst_string = dst->get_L2();
-      if (dst->is_reg()) {
-        gen.insert(dst_string);
-      }
-      else if (dst->is_var()) {
-        gen.insert(remove_percentage(dst_string));
-      }
+      gen.insert(dst_string);
       return gen;
     }
 
     std::set<std::string> Instruction_inc_dec::get_kill() {
       std::set<std::string> kill;
       std::string dst_string = dst->get_L2();
-      if (dst->is_reg()) {
-        kill.insert(dst_string);
-      }
-      else if (dst->is_var()) {
-        kill.insert(remove_percentage(dst_string));
-      }
+      kill.insert(dst_string);
       return kill;
     }
 
     std::set<std::string> Instruction_wwe::get_kill() {
       std::set<std::string> kill;
       std::string dst_string = dst->get_L2();
-      if (dst->is_reg()) {
+      if (dst->is_reg() || dst->is_var()) {
         kill.insert(dst_string);
-      }
-      else if (dst->is_var()) {
-        kill.insert(remove_percentage(dst_string));
       }
       return kill;
     }
@@ -404,7 +373,7 @@ namespace L2 {
         }
       }
       else if (w1->is_var()) {
-        gen.insert(remove_percentage(w1_string));
+        gen.insert(w1_string);
       }
 
       if (w2->is_reg()) {
@@ -413,18 +382,15 @@ namespace L2 {
         }
       }
       else if (w2->is_var()) {
-        gen.insert(remove_percentage(w2_string));
+        gen.insert(w2_string);
       }
       return gen;
     }
 
     std::set<std::string> Instruction_call::get_gen() {
       std::set<std::string> gen = std::set<std::string>(callee_saved.begin(), callee_saved.begin()+std::min(6, stoi(arg_num->get_L2())));
-      if (label->is_reg()) {
+      if (label->is_reg() || label->is_var()) {
         gen.insert(label->get_L2());
-      }
-      else if (label->is_var()) {
-        gen.insert(remove_percentage(label->get_L2()));
       }
       return gen;
     }
