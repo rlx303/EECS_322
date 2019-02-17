@@ -1,9 +1,19 @@
-define :main ( ){
-  %v1 <- 1
-  %v2 <- 2
-
-  %tempV <- %v1 + %v2
-  call print(%tempV)
-
-  return 0
+define :main (){
+ %test1 <- 7
+ %test2 <- 11
+ %test3 <- 3
+ %test4 <- 9
+ %test5 <- 5
+ %test6 <- 1
+ %newVar1 <- 11 >> 1
+ %newVar0 <- %newVar1
+ %newVar2 <- 9 >> 1
+ %newVar0 <- %newVar0 * %newVar2
+ %newVar3 <- 7 >> 1
+ %newVar0 <- %newVar0 * %newVar3
+ %newVar0 <- %newVar0 << 1
+ %newVar0 <- %newVar0 + 1
+ %newVar0 <- %newVar0 + 8
+ call print (%newVar0)
+ return
 }

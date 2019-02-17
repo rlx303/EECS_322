@@ -75,13 +75,16 @@ namespace L3{
 				std::string ret_label = label_prefix + "ret" + std::to_string(counter);
 				ret += "mem " + stack_pointer + " -8 <- " + 
 				ret_label + '\n';
+				int extra = (int)i->args.size() - (int)argument_registers.size();
 				for (int j=0; j<i->args.size(); j++) {
 					if(j<argument_registers.size()) {
 						ret += argument_registers.at(j) + " <- " + i->args.at(j)->data + '\n';
 					} 
 					else {
+						int offset = j-(int)argument_registers.size();
+						std::cout << -8-8*(j-(int)argument_registers.size()+1) << std::endl;
 						ret += "mem " + stack_pointer + ' ' + 
-						std::to_string(-8-8*(i->args.size()+1)) + 
+						std::to_string(-8-8*extra + offset*8) + 
 						" <- " + i->args.at(j)->data + '\n';
 					}
 				}
@@ -103,13 +106,15 @@ namespace L3{
 				std::string ret_label = label_prefix + "ret" + std::to_string(counter);
 				ret += "mem " + stack_pointer + " -8 <- " + 
 				ret_label + '\n';
+				int extra = (int)i->args.size() - (int)argument_registers.size();
 				for (int j=0; j<i->args.size(); j++) {
 					if(j<argument_registers.size()) {
 						ret += argument_registers.at(j) + " <- " + i->args.at(j)->data + '\n';
 					} 
 					else {
+						int offset = j-(int)argument_registers.size();
 						ret += "mem " + stack_pointer + ' ' + 
-						std::to_string(-8-8*(i->args.size()+1)) + 
+						std::to_string(-8-8*extra + offset*8) + 
 						" <- " + i->args.at(j)->data + '\n';
 					}
 				}
@@ -237,7 +242,6 @@ namespace L3{
   	labels_unique(p);
   	for (auto &f : p.functions) {
   		int arg_size = f->args.size();
-  		int extra = arg_size - argument_registers.size();
   		of << '(' << f->name << '\n';
   		of << std::to_string(arg_size) << " 0\n";
   		for (int i=0; i<arg_size; i++) {
@@ -245,9 +249,7 @@ namespace L3{
 					of << f->args.at(i)->data << " <- " << argument_registers.at(i) << '\n';
 				} 
 				else {
-					of << f->args.at(i)->data << " <- mem " << stack_pointer << ' ' << 
-					8*(extra-1) << '\n';
-					extra--;
+					of << f->args.at(i)->data << " <- stack-arg " << 8*(i-(int)argument_registers.size()) << '\n';
 				}
   		}
   		auto tmp_var = longest_var(f) + "tmp";

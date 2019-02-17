@@ -1,238 +1,39 @@
 (:main
 (:main
 0 0
-rdi <- 5
-rsi <- 3
-call allocate 2
-%array <- rax
-rdi <- %array
+%test1 <- 7
+%test2 <- 11
+%test3 <- 3
+%test4 <- 9
+%test5 <- 5
+%test6 <- 1
+%newVar1tmp <- 11
+%newVar1tmp >>= 1
+%newVar1 <- %newVar1tmp
+%newVar0 <- %newVar1
+%newVar1tmp <- 9
+%newVar1tmp >>= 1
+%newVar2 <- %newVar1tmp
+%newVar1tmp <- %newVar0
+%newVar1tmp *= %newVar2
+%newVar0 <- %newVar1tmp
+%newVar1tmp <- 7
+%newVar1tmp >>= 1
+%newVar3 <- %newVar1tmp
+%newVar1tmp <- %newVar0
+%newVar1tmp *= %newVar3
+%newVar0 <- %newVar1tmp
+%newVar1tmp <- %newVar0
+%newVar1tmp <<= 1
+%newVar0 <- %newVar1tmp
+%newVar1tmp <- %newVar0
+%newVar1tmp += 1
+%newVar0 <- %newVar1tmp
+%newVar1tmp <- %newVar0
+%newVar1tmp += 8
+%newVar0 <- %newVar1tmp
+rdi <- %newVar0
 call print 1
-mem rsp -8 <- :getArrayElementByIndexPlusOneret0
-rdi <- %array
-call :printArrayBackwards 1
-:getArrayElementByIndexPlusOneret0
-mem rsp -8 <- :getArrayElementByIndexPlusOneret1
-rdi <- %array
-rsi <- 2
-call :getArrayElementByIndexPlusOne 2
-:getArrayElementByIndexPlusOneret1
-%element <- rax
-rdi <- %element
-call print 1
-%length <- mem %array 0
-%index <- 1
-:getArrayElementByIndexPlusOne0
-%sign <- %index <= %length
-cjump 1 = %sign :getArrayElementByIndexPlusOne1
-:getArrayElementByIndexPlusOne2
-:getArrayElementByIndexPlusOne1
-mem rsp -8 <- :getArrayElementByIndexPlusOneret2
-rdi <- %array
-rsi <- %index
-call :getArrayElementByIndexPlusOne 2
-:getArrayElementByIndexPlusOneret2
-%element <- rax
-rdi <- %element
-call print 1
-%elementtmp <- %index
-%elementtmp += 1
-%index <- %elementtmp
-goto :getArrayElementByIndexPlusOne0
-:getArrayElementByIndexPlusOne2
-return
-)
-(:isAddress
-1 0
-%p1 <- rdi
-%p1tmp <- %p1
-%p1tmp &= 1
-%p2 <- %p1tmp
-%p2 <- %p2 = 0
-cjump 1 = %p2 :isAddress
-:getArrayElementByIndexPlusOne3
-:isAddress
-rax <- 1
-return
-:getArrayElementByIndexPlusOne3
-rax <- 0
-return
-)
-(:encode
-1 0
-%var <- rdi
-:getArrayElementByIndexPlusOne4
-%vartmp <- %var
-%vartmp <<= 1
-%var <- %vartmp
-%vartmp <- %var
-%vartmp += 1
-%var <- %vartmp
-rax <- %var
-return
-)
-(:increaseOne
-1 0
-%p1 <- rdi
-%p1tmp <- %p1
-%p1tmp += 1
-%p5 <- %p1tmp
-rax <- %p5
-return
-)
-(:decreaseOne
-1 0
-%p1 <- rdi
-%p1tmp <- %p1
-%p1tmp -= 1
-%p5 <- %p1tmp
-rax <- %p5
-return
-)
-(:getArrayElementByIndexPlusOne
-2 0
-%array <- rdi
-%index <- rsi
-%elementtmp <- 8
-%elementtmp *= %index
-%offest <- %elementtmp
-%elementtmp <- %array
-%elementtmp += %offest
-%addr <- %elementtmp
-%element <- mem %addr 0
-rax <- %element
-return
-)
-(:printArrayElementByIndex
-2 0
-%array <- rdi
-%index <- rsi
-mem rsp -8 <- :getArrayElementByIndexPlusOneret3
-rdi <- %index
-call :increaseOne 1
-:getArrayElementByIndexPlusOneret3
-%index <- rax
-%elementtmp <- 8
-%elementtmp *= %index
-%offest <- %elementtmp
-%elementtmp <- %array
-%elementtmp += %offest
-%addr <- %elementtmp
-%element <- mem %addr 0
-rdi <- %element
-call print 1
-return
-)
-(:printArrayBackwards
-1 0
-%array <- rdi
-mem rsp -8 <- :getArrayElementByIndexPlusOneret4
-rdi <- %A1
-call :isAddress 1
-:getArrayElementByIndexPlusOneret4
-%is_A1_address <- rax
-cjump 1 = %is_A1_address :getArrayElementByIndexPlusOne5
-:getArrayElementByIndexPlusOne6
-:getArrayElementByIndexPlusOne5
-%length <- mem %array 0
-%is_A1_addresstmp <- %length
-%is_A1_addresstmp -= 1
-%index <- %is_A1_addresstmp
-:getArrayElementByIndexPlusOne7
-%tmp <- 0 <= %index
-cjump 1 = %tmp :getArrayElementByIndexPlusOne8
-:getArrayElementByIndexPlusOne9
-:getArrayElementByIndexPlusOne8
-mem rsp -8 <- :getArrayElementByIndexPlusOneret5
-rdi <- %array
-rsi <- %index
-call :printArrayElementByIndex 2
-:getArrayElementByIndexPlusOneret5
-%is_A1_addresstmp <- %index
-%is_A1_addresstmp -= 1
-%index <- %is_A1_addresstmp
-goto :getArrayElementByIndexPlusOne7
-:getArrayElementByIndexPlusOne9
-:getArrayElementByIndexPlusOne6
-return
-)
-(:isEqual
-2 0
-%p1 <- rdi
-%p2 <- rsi
-%p3 <- %p1 = %P2
-cjump 1 = %p3 :getArrayElementByIndexPlusOne10
-:getArrayElementByIndexPlusOne11
-:getArrayElementByIndexPlusOne10
-rax <- 1
-return
-:getArrayElementByIndexPlusOne11
-rax <- 0
-return
-)
-(:getSamller
-2 0
-%p1 <- rdi
-%p2 <- rsi
-mem rsp -8 <- :getArrayElementByIndexPlusOneret6
-rdi <- %p1
-rsi <- %p2
-call :isSmallerAndEqual 2
-:getArrayElementByIndexPlusOneret6
-%sign <- rax
-cjump 1 = %sign :getArrayElementByIndexPlusOne12
-:getArrayElementByIndexPlusOne13
-:getArrayElementByIndexPlusOne12
-rax <- %p1
-return
-:getArrayElementByIndexPlusOne13
-rax <- %p2
-return
-)
-(:isSmaller
-2 0
-%p1 <- rdi
-%p2 <- rsi
-%p3 <- %p1 < 1
-cjump 1 = %p3 :getArrayElementByIndexPlusOne14
-:getArrayElementByIndexPlusOne15
-:getArrayElementByIndexPlusOne14
-rax <- 1
-return
-:getArrayElementByIndexPlusOne15
-rax <- 0
-return
-)
-(:isSmallerAndEqual
-2 0
-%p1 <- rdi
-%p2 <- rsi
-%p3 <- %p1 <= 1
-cjump 1 = %p3 :getArrayElementByIndexPlusOne16
-:getArrayElementByIndexPlusOne17
-:getArrayElementByIndexPlusOne16
-rax <- 1
-return
-:getArrayElementByIndexPlusOne17
-rax <- 0
-return
-)
-(:getArrayElementByIndex
-2 0
-%array <- rdi
-%index <- rsi
-mem rsp -8 <- :getArrayElementByIndexPlusOneret7
-rdi <- %index
-call :increaseOne 1
-:getArrayElementByIndexPlusOneret7
-%index <- rax
-%elementtmp <- 8
-%elementtmp *= %index
-%offest <- %elementtmp
-%elementtmp <- %array
-%elementtmp += %offest
-%addr <- %elementtmp
-%element <- mem %addr 0
-rax <- %element
 return
 )
 )
