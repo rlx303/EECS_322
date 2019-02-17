@@ -1,0 +1,224 @@
+(:main
+(:main
+0 0
+rdi <- 3
+rsi <- 5
+call allocate 2
+%array <- rax
+rdi <- %array
+call print 1
+mem rsp -8 <- :getArrayElementByIndexPlusOneret0
+rdi <- %array
+call :printArrayBackwards 1
+:getArrayElementByIndexPlusOneret0
+mem rsp -8 <- :getArrayElementByIndexPlusOneret1
+rdi <- 2
+rsi <- %array
+call :getArrayElementByIndexPlusOne 2
+:getArrayElementByIndexPlusOneret1
+%element <- rax
+rdi <- %element
+call print 1
+%length <- mem %array 0
+%index <- 1
+:loop_start
+%sign <- %index <= %length
+cjump 1 = %sign :loop_next
+:loop_end
+:loop_next
+mem rsp -8 <- :getArrayElementByIndexPlusOneret2
+rdi <- %index
+rsi <- %array
+call :getArrayElementByIndexPlusOne 2
+:getArrayElementByIndexPlusOneret2
+%element <- rax
+rdi <- %element
+call print 1
+%index <- %index
+%index += 1
+goto :loop_start
+:loop_end
+return
+)
+(:isAddress
+1 0
+%p1 <- rdi
+%p2 <- %p1
+%p2 &= 1
+%p2 <- %p2 = 0
+cjump 1 = %p2 :isAddress
+:isNumber
+:isAddress
+rax <- 1
+return
+:isNumber
+rax <- 0
+return
+)
+(:encode
+1 0
+%var <- rdi
+:entry
+%var <- %var
+%var <<= 1
+%var <- %var
+%var += 1
+rax <- %var
+return
+)
+(:increaseOne
+1 0
+%p1 <- rdi
+%p5 <- %p1
+%p5 += 1
+rax <- %p5
+return
+)
+(:decreaseOne
+1 0
+%p1 <- rdi
+%p5 <- %p1
+%p5 -= 1
+rax <- %p5
+return
+)
+(:getArrayElementByIndexPlusOne
+2 0
+%index <- rdi
+%array <- rsi
+%offest <- 8
+%offest *= %index
+%addr <- %array
+%addr += %offest
+%element <- mem %addr 0
+rax <- %element
+return
+)
+(:printArrayElementByIndex
+2 0
+%index <- rdi
+%array <- rsi
+mem rsp -8 <- :getArrayElementByIndexPlusOneret3
+rdi <- %index
+call :increaseOne 1
+:getArrayElementByIndexPlusOneret3
+%index <- rax
+%offest <- 8
+%offest *= %index
+%addr <- %array
+%addr += %offest
+%element <- mem %addr 0
+rdi <- %element
+call print 1
+return
+)
+(:printArrayBackwards
+1 0
+%array <- rdi
+mem rsp -8 <- :getArrayElementByIndexPlusOneret4
+rdi <- %A1
+call :isAddress 1
+:getArrayElementByIndexPlusOneret4
+%is_A1_address <- rax
+cjump 1 = %is_A1_address :is_array_label
+:not_array_label
+:is_array_label
+%length <- mem %array 0
+%index <- %length
+%index -= 1
+:loop_start
+%tmp <- 0 <= %index
+cjump 1 = %tmp :loop_next
+:loop_end
+:loop_next
+mem rsp -8 <- :getArrayElementByIndexPlusOneret5
+rdi <- %index
+rsi <- %array
+call :printArrayElementByIndex 2
+:getArrayElementByIndexPlusOneret5
+%index <- %index
+%index -= 1
+goto :loop_start
+:loop_end
+:not_array_label
+return
+)
+(:isEqual
+2 0
+%p2 <- rdi
+%p1 <- rsi
+%p3 <- %p1 = %P2
+cjump 1 = %p3 :equal
+:not_equal
+:equal
+rax <- 1
+return
+:not_equal
+rax <- 0
+return
+)
+(:getSamller
+2 0
+%p2 <- rdi
+%p1 <- rsi
+mem rsp -8 <- :getArrayElementByIndexPlusOneret6
+rdi <- %p2
+rsi <- %p1
+call :isSmallerAndEqual 2
+:getArrayElementByIndexPlusOneret6
+%sign <- rax
+cjump 1 = %sign :p1_smaller
+:p2_smaller
+:p1_smaller
+rax <- %p1
+return
+:p2_smaller
+rax <- %p2
+return
+)
+(:isSmaller
+2 0
+%p2 <- rdi
+%p1 <- rsi
+%p3 <- %p1 < 1
+cjump 1 = %p3 :smaller
+:larger
+:smaller
+rax <- 1
+return
+:larger
+rax <- 0
+return
+)
+(:isSmallerAndEqual
+2 0
+%p2 <- rdi
+%p1 <- rsi
+%p3 <- %p1 <= 1
+cjump 1 = %p3 :smaller
+:larger
+:smaller
+rax <- 1
+return
+:larger
+rax <- 0
+return
+)
+(:getArrayElementByIndex
+2 0
+%index <- rdi
+%array <- rsi
+mem rsp -8 <- :getArrayElementByIndexPlusOneret7
+rdi <- %index
+call :increaseOne 1
+:getArrayElementByIndexPlusOneret7
+%index <- rax
+%offest <- 8
+%offest *= %index
+%addr <- %array
+%addr += %offest
+%element <- mem %addr 0
+rax <- %element
+return
+)
+)
