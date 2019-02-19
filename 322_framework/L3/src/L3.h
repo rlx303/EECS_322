@@ -9,6 +9,7 @@ namespace L3 {
    */
 	struct Item{
 		std::string data;
+		Item() {}
 		Item(std::string input) {data = input;}
 		virtual bool is_var() {return false;}
 		virtual bool is_runtime() {return false;}
@@ -27,7 +28,9 @@ namespace L3 {
 	};
 
 	struct I_num : Item{
-    I_num(std::string input) :Item(input) {}
+    I_num(std::string input) {
+    	data = input.erase(0, std::min(input.find_first_not_of('0'), input.size()-1));
+    }
 	};
 	struct I_op : Item{
     I_op(std::string input) :Item(input) {}

@@ -82,7 +82,6 @@ namespace L3{
 					} 
 					else {
 						int offset = j-(int)argument_registers.size();
-						std::cout << -8-8*(j-(int)argument_registers.size()+1) << std::endl;
 						ret += "mem " + stack_pointer + ' ' + 
 						std::to_string(-8-8*extra + offset*8) + 
 						" <- " + i->args.at(j)->data + '\n';
@@ -147,87 +146,57 @@ namespace L3{
   		std::string prefix = p.longest_label;
   		std::map<std::string, std::string> label_map;
   		for (auto &i: f->instructions) {
+  			if (auto a = dynamic_cast<Instruction_label*>(i)) {
+				std::string new_label = prefix + std::to_string(counter);
+				label_map.insert(std::pair<std::string, std::string>(a->label->data, new_label));
+				counter++;
+				a->label->data = label_map[a->label->data];
+			}
+  		}
+  		for (auto &i: f->instructions) {
   			if (auto a = dynamic_cast<Instruction_assign*>(i)) {
 				if (a->src->is_label()) {
-					if (f_names.count(a->src->data)==0) {
-						if (label_map.count(a->src->data)==0) {
-							std::string new_label = prefix + std::to_string(counter);
-							label_map.insert(std::pair<std::string, std::string>(a->src->data, new_label));
-							counter++;
-						}
+					if (label_map.count(a->src->data)!=0) {
 						a->src->data = label_map[a->src->data];
 					}
 				}
 			}
 			else if (auto a = dynamic_cast<Instruction_store*>(i)) {
 				if (a->src->is_label()) {
-					if (f_names.count(a->src->data)==0) {
-						if (label_map.count(a->src->data)==0) {
-							std::string new_label = prefix + std::to_string(counter);
-							label_map.insert(std::pair<std::string, std::string>(a->src->data, new_label));
-							counter++;
-						}
+					if (label_map.count(a->src->data)!=0) {
 						a->src->data = label_map[a->src->data];
-					}	
-				}
-			}
-			else if (auto a = dynamic_cast<Instruction_label*>(i)) {
-				if (a->label->is_label()) {
-					if (f_names.count(a->label->data)==0) {
-						if (label_map.count(a->label->data)==0) {
-							std::string new_label = prefix + std::to_string(counter);
-							label_map.insert(std::pair<std::string, std::string>(a->label->data, new_label));
-							counter++;
-						}
-						a->label->data = label_map[a->label->data];
 					}
 				}
 			}
 			else if (auto a = dynamic_cast<Instruction_br*>(i)) {
 				if (a->label->is_label()) {
-					if (f_names.count(a->label->data)==0) {
-						if (label_map.count(a->label->data)==0) {
-							std::string new_label = prefix + std::to_string(counter);
-							label_map.insert(std::pair<std::string, std::string>(a->label->data, new_label));
-							counter++;
-						}
+					if (label_map.count(a->label->data)!=0) {
 						a->label->data = label_map[a->label->data];
 					}
 				}				
 			}
 			else if (auto a = dynamic_cast<Instruction_br_var*>(i)) {
 				if (a->label->is_label()) {
-					if (f_names.count(a->label->data)==0) {
-						if (label_map.count(a->label->data)==0) {
-							std::string new_label = prefix + std::to_string(counter);
-							label_map.insert(std::pair<std::string, std::string>(a->label->data, new_label));
-							counter++;
-						}					
+					if (label_map.count(a->label->data)!=0) {
 						a->label->data = label_map[a->label->data];
-					}
+					}					
 				}			
 			}
 			else if (auto a = dynamic_cast<Instruction_call*>(i)) {
 				if (a->callee->is_label()) {
 					if (f_names.count(a->callee->data)==0) {
-						if (label_map.count(a->callee->data)==0) {
-							std::string new_label = prefix + std::to_string(counter);
-							label_map.insert(std::pair<std::string, std::string>(a->callee->data, new_label));
-							counter++;
+						if (label_map.count(a->callee->data)!=0) {
+							a->callee->data = label_map[a->callee->data];
 						}
-						a->callee->data = label_map[a->callee->data];
 					}
 				}
 			}
 			else if (auto a = dynamic_cast<Instruction_call_var*>(i)) {
 				if (a->callee->is_label()) {
 					if (f_names.count(a->callee->data)==0) {
-						if (label_map.count(a->callee->data)==0) {
-							std::string new_label = prefix + std::to_string(counter);
-							label_map.insert(std::pair<std::string, std::string>(a->callee->data, new_label));
-							counter++;
+						if (label_map.count(a->callee->data)!=0) {
+							a->callee->data = label_map[a->callee->data];
 						}
-						a->callee->data = label_map[a->callee->data];
 					}
 				}
 			}
