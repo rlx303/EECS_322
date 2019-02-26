@@ -13,13 +13,10 @@
 #include <iostream>
 
 #include <parser.h>
-//#include <analysis.h>
-//#include <transformer.h>
 #include <code_generator.h>
-//#include <spiller.h>
-//#include <register_allocation.h>
-#include <utils.h>
+#include <ig.h>
 #include <L2.h>
+#include <utils.h>
 
 using namespace std;
 
@@ -32,7 +29,7 @@ int main(
   int argc, 
   char **argv
   ){
-  auto enable_code_generator = false;
+  auto enable_code_generator = true;
   auto spill_only = false;
   auto interference_only = false;
   auto verbose = false;
@@ -137,7 +134,7 @@ int main(
   if (liveness_only){
     auto p = L2::parse_function(argv[optind]);
     auto f = p.functions.back();
-    generate_in_out(f);
+    L2::generate_in_out(f);
     cout << "(" << endl;
     cout << "(in" << endl;
     for (auto& i : f->instructions) {
@@ -165,15 +162,12 @@ int main(
   if (interference_only){
     auto p = L2::parse_function(argv[optind]);
     auto f = p.functions.back();
-    generate_in_out(f);
-    auto ig = generate_interference_graph(f);
-    for (auto const& ig_entry : ig) {
-      cout << L2::remove_percentage(ig_entry.first) << ' ';
-      for (auto const& edge : ig_entry.second){
-        cout << L2::remove_percentage(edge) << ' ';
-      }
-      cout << '\n';
-    }
+    L2::generate_in_out(f);
+    auto ig = L2::generate_interference_graph(f);
+    ig.print();
+    //testing only/////
+    L2::color_graph(f, ig);
+    ///////////////////
     return 0;
   }
 
@@ -181,8 +175,8 @@ int main(
    * Generate the target code.
    */
   if (enable_code_generator){
-    //TODO
+    auto p = L2::parse_file(argv[optind]);
+    generate_code(p);
   }
-
   return 0;
 }

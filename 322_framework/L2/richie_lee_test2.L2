@@ -1,38 +1,32 @@
-(:go
- (:go
-   0 0
-   rdi <- 10
-   rsi <- 2
-   mem rsp -8 <- :div_ret_1
-   call :easy_divisible 2
-   :div_ret_1
-   rax <<= 1
-   rax++
-   rdi <- rax
-   call print 1
-   rdi <- 10
-   rsi <- 3
-   mem rsp -8 <- :div_ret_2
-   call :easy_divisible 2
-   :div_ret_2
-   rax <<= 1
-   rax++
-   rdi <- rax
-   call print 1
+define :main(){
+   %first <- 10
+   %second <- 2
+   %ret <- call :easy_divisible (%first, %second)
+   %ret <- %ret << 1
+   %ret <- %ret + 1
+   call print (%ret)
+   %first <- 10
+   %second <- 3
+   %ret <- call :easy_divisible (%first, %second)
+   %ret <- %ret << 1
+   %ret <- %ret + 1
+   call print (%ret)
    return
-  )
- (:easy_divisible
-   2 0
+  }
+  
+define :easy_divisible(%first, %second) {
   %ret <- 1
   :START
-  cjump rdi = 0 :DONE
-  rdi -= rsi
-  cjump rdi < 0 :NOO
-  goto :START
+  %com <- %first = 0
+  br %com :DONE
+  %first <- %first - %second
+  %com <- %first < 0
+  br %com :NOO
+  br :START
   :NOO
   %ret <- 0
   :DONE
-  rax <- %ret
-  return
-  )
-)
+  return %ret
+}
+
+

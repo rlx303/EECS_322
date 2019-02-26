@@ -1,0 +1,34 @@
+(:main
+	(:main
+	0 0
+	:entry
+	mem rsp -8 <- :myOtherFret0
+call :myF 0
+:myOtherFret0
+%callerFP <- rax
+mem rsp -8 <- :myOtherFret1
+rdi <- 2
+call %callerFP 1
+:myOtherFret1
+%v <- rax
+rdi <- %v
+call print 1
+return
+)
+(:myF
+0 0
+:entry
+%fp <- :myOtherF
+rax <- %fp
+return
+)
+(:myOtherF
+1 0
+%p <- rdi
+:entry
+%r <- %p
+%r += 1
+rax <- %r
+return
+)
+)

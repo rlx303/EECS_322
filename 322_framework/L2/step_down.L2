@@ -1,0 +1,9 @@
+(:go
+(:go
+0 0
+
+%newVar1 <- %newVar1tmp
+%newVar0 <- %newVar1
+return
+)
+)

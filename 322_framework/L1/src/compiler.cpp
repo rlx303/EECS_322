@@ -63,14 +63,6 @@ int main(
    */
   auto p = L1::parse_file(argv[optind]);
 
-  // for (int i=0; i<37; i++) {
-  //   auto in = p.functions.back()->instructions.back();
-  //   cout << in->print_x86() << "\n";
-  //   p.functions.back()->instructions.pop_back();
-  // }
-
-
-
   /* 
    * Print the source program.
    */

@@ -5,17 +5,17 @@
 
 namespace L2 {
 	std::map<std::string, std::string> reg_map = {
-    	{"r8", "r8b"},
-    	{"r9", "r9b"},
-    	{"r10", "r10b"},
-    	{"r11", "r11b"},
     	{"r12", "r12b"},
     	{"r13", "r13b"},
     	{"r14", "r14b"},
     	{"r15", "r15b"},
-    	{"rax", "al"},
     	{"rbp", "bpl"},
     	{"rbx", "bl"},
+    	{"r8", "r8b"},
+    	{"r9", "r9b"},
+    	{"r10", "r10b"},
+    	{"r11", "r11b"},
+    	{"rax", "al"},
 	    {"rcx", "cl"},
 	    {"rdi", "dil"},
 	    {"rdx", "dl"},
@@ -29,7 +29,7 @@ namespace L2 {
   		"rdi", "rsi", "rdx", "rcx", "r8", "r9"
   	};
 
-  	std::string I_aop::get_x86()  {
+  	std::string I_aop::get_L1()  {
       if (data == "+=") {
         return "addq";
       } 
@@ -44,7 +44,7 @@ namespace L2 {
       }
     }
 
-    std::string I_sop::get_x86()  {
+    std::string I_sop::get_L1()  {
       if (data == "<<=") {
         return "salq";
       }
@@ -53,7 +53,7 @@ namespace L2 {
       } 
     }
 
-    std::string I_inc_dec::get_x86() {
+    std::string I_inc_dec::get_L1() {
       if (data == "++") {
         return "inc";
       } 
@@ -62,7 +62,7 @@ namespace L2 {
       }
     }
 
-    std::string Instruction_cmp::print_x86() {
+    std::string Instruction_cmp::print_L1() {
       std::string reg = "%" + reg_map[dst->get_L2()];
       std::string cmp_sign = cmp->get_L2();
       if (!t1->is_int()) { //t1 is not number
@@ -74,8 +74,8 @@ namespace L2 {
         } else {
           set = "sete";
         }
-        return "cmpq " + t2->get_x86() + ", " + t1->get_x86() + "\n" + 
-        set + " " + reg + "\n" + "movzbq " + reg + ", " + dst->get_x86();
+        return "cmpq " + t2->get_L1() + ", " + t1->get_L1() + "\n" + 
+        set + " " + reg + "\n" + "movzbq " + reg + ", " + dst->get_L1();
       } else { //t1 is number
         if (!t2->is_int()) { //t2 is not number
           std::string set;
@@ -86,13 +86,13 @@ namespace L2 {
           } else {
             set = "sete";
           }
-          return "cmpq " + t1->get_x86() + ", " + t2->get_x86() + "\n" + 
-          set + " " + reg + "\n" + "movzbq " + reg + ", " + dst->get_x86();
+          return "cmpq " + t1->get_L1() + ", " + t2->get_L1() + "\n" + 
+          set + " " + reg + "\n" + "movzbq " + reg + ", " + dst->get_L1();
         } else { //t2 is also number
             int t1_val = stoi(t1->get_L2());
             int t2_val = stoi(t2->get_L2());
-            std::string move_1 = "movq $1, " + dst->get_x86();
-            std::string move_0 = "movq $0, " + dst->get_x86();
+            std::string move_1 = "movq $1, " + dst->get_L1();
+            std::string move_0 = "movq $0, " + dst->get_L1();
             if (cmp_sign=="<") {
               return (t1_val < t2_val) ? move_1 : move_0;
             } else if (cmp_sign=="<=") {
@@ -105,10 +105,10 @@ namespace L2 {
       return "";
     }
 
-    std::string Instruction_two_label_jump::print_x86() {
+    std::string Instruction_two_label_jump::print_L1() {
       std::string cmp_sign = cmp->get_L2();
-      std::string label1_x86 = label1->get_L2().replace(0, 1, "_");
-      std::string label2_x86 = label2->get_L2().replace(0, 1, "_");
+      std::string label1_L1 = label1->get_L2().replace(0, 1, "_");
+      std::string label2_L1 = label2->get_L2().replace(0, 1, "_");
       if (!t1->is_int()) { //t1 is not number
         std::string jmp;
         if (cmp_sign=="<") {
@@ -118,9 +118,9 @@ namespace L2 {
         } else {
           jmp = "je";
         }
-        return "cmpq " + t2->get_x86() + ", " + t1->get_x86() + "\n" + 
-        jmp + " " + label1_x86 + "\n" + 
-        "jmp " + label2_x86;
+        return "cmpq " + t2->get_L1() + ", " + t1->get_L1() + "\n" + 
+        jmp + " " + label1_L1 + "\n" + 
+        "jmp " + label2_L1;
       } 
       else { //t1 is number
         if (!t2->is_int()) { //t2 is not number
@@ -132,15 +132,15 @@ namespace L2 {
           } else {
             jmp = "je";
           }
-        return "cmpq " + t1->get_x86() + ", " + t2->get_x86() + "\n" + 
-        jmp + " " + label1_x86 + "\n" + 
-        "jmp " + label2_x86;
+        return "cmpq " + t1->get_L1() + ", " + t2->get_L1() + "\n" + 
+        jmp + " " + label1_L1 + "\n" + 
+        "jmp " + label2_L1;
         } 
         else { //t2 is also number
           int t1_val = stoi(t1->get_L2());
           int t2_val = stoi(t2->get_L2());
-          std::string jmp_1 = "jmp " + label1_x86;
-          std::string jmp_2 = "jmp " + label2_x86;
+          std::string jmp_1 = "jmp " + label1_L1;
+          std::string jmp_2 = "jmp " + label2_L1;
           if (cmp_sign=="<") {
             return (t1_val < t2_val) ? jmp_1 : jmp_2;
           } else if (cmp_sign=="<=") {
@@ -153,9 +153,9 @@ namespace L2 {
     }
 
 
-    std::string Instruction_one_label_jump::print_x86() {
+    std::string Instruction_one_label_jump::print_L1() {
       std::string cmp_sign = cmp->get_L2();
-      std::string label1_x86 = label1->get_L2().replace(0, 1, "_");
+      std::string label1_L1 = label1->get_L2().replace(0, 1, "_");
       if (!t1->is_int()) { //t1 is not number
         std::string jmp;
         if (cmp_sign=="<") {
@@ -165,8 +165,8 @@ namespace L2 {
         } else {
           jmp = "je";
         }
-        return "cmpq " + t2->get_x86() + ", " + t1->get_x86() + "\n" + 
-        jmp + " " + label1_x86;
+        return "cmpq " + t2->get_L1() + ", " + t1->get_L1() + "\n" + 
+        jmp + " " + label1_L1;
       } 
       else { //t1 is number
         if (!t2->is_int()) { //t2 is not number
@@ -178,13 +178,13 @@ namespace L2 {
           } else {
             jmp = "je";
           }
-        return "cmpq " + t1->get_x86() + ", " + t2->get_x86() + "\n" + 
-        jmp + " " + label1_x86;
+        return "cmpq " + t1->get_L1() + ", " + t2->get_L1() + "\n" + 
+        jmp + " " + label1_L1;
         } 
         else { //t2 is also number
           int t1_val = stoi(t1->get_L2());
           int t2_val = stoi(t2->get_L2());
-          std::string jmp_1 = "jmp " + label1_x86;
+          std::string jmp_1 = "jmp " + label1_L1;
           if (cmp_sign=="<") {
             return (t1_val < t2_val) ? jmp_1 : "";
           } else if (cmp_sign=="<=") {
@@ -196,7 +196,7 @@ namespace L2 {
       }
     }
 
-    std::string Instruction_call::print_x86() {
+    std::string Instruction_call::print_L1() {
       std::string l = label->get_L2();
       std::string f = (l.at(0)==':') ? l.replace(0, 1, "_") : "*%"+l;
       int n = stoi(arg_num->get_L2());

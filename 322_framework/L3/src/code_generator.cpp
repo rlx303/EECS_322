@@ -173,7 +173,7 @@ namespace L3{
 					if (label_map.count(a->label->data)!=0) {
 						a->label->data = label_map[a->label->data];
 					}
-				}				
+				}
 			}
 			else if (auto a = dynamic_cast<Instruction_br_var*>(i)) {
 				if (a->label->is_label()) {

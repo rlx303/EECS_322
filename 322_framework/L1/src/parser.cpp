@@ -108,8 +108,8 @@ namespace L1 {
   struct sx_rule : 
     sx {};
 
-  struct sx_shift : 
-    sx {};
+  struct rcx_shift : 
+    TAOCPP_PEGTL_STRING( "rcx" ) {};
 
   struct a :
     pegtl::sor<
@@ -171,6 +171,12 @@ namespace L1 {
       Label_rule
     > {};
 
+  struct var :
+    pegtl::seq<
+      pegtl::one<'%'>,
+      name 
+    > {};
+
   struct arrow: 
     TAOCPP_PEGTL_STRING("<-")
     {};
@@ -230,7 +236,6 @@ namespace L1 {
         '\t' 
       >
     >{};
-
 
   struct memxM:
     pegtl::seq<
@@ -296,13 +301,13 @@ namespace L1 {
       t
     >{};
 
-  struct sx2w_sop_rule:
+  struct rcx2w_sop_rule:
     pegtl::seq<
       w_rule,
       seps,
       sop,
       seps,
-      sx_shift
+      rcx_shift
     >{};
 
   struct N2w_sop_rule:
@@ -345,7 +350,7 @@ namespace L1 {
       pegtl::seq<pegtl::at<s2w_assign_rule>, s2w_assign_rule>,
       pegtl::seq<pegtl::at<mem2w_assign_rule>, mem2w_assign_rule>,
       pegtl::seq<pegtl::at<s2mem_assign_rule>, s2mem_assign_rule>,
-      pegtl::seq<pegtl::at<sx2w_sop_rule>, sx2w_sop_rule>,
+      pegtl::seq<pegtl::at<rcx2w_sop_rule>, rcx2w_sop_rule>,
       pegtl::seq<pegtl::at<N2w_sop_rule>, N2w_sop_rule>,
       pegtl::seq<pegtl::at<t2mem_aop_rule>, t2mem_aop_rule>,
       pegtl::seq<pegtl::at<mem2w_aop_rule>, mem2w_aop_rule>
@@ -598,18 +603,18 @@ namespace L1 {
     }
   };
 
-  template<> struct action < sx_rule > {
-    template< typename Input >
-  static void apply( const Input & in, Program & p){
-      auto i = new I_reg(in.string());
-      parsed_registers.push_back(i);
-    }
-  };
+  // template<> struct action < sx_rule > {
+  //   template< typename Input >
+  // static void apply( const Input & in, Program & p){
+  //     auto i = new I_reg(in.string());
+  //     parsed_registers.push_back(i);
+  //   }
+  // };
 
-  template<> struct action < sx_shift > {
+  template<> struct action < rcx_shift > {
     template< typename Input >
   static void apply( const Input & in, Program & p){
-      auto i = new I_sx(in.string());
+      auto i = new I_rcx(in.string());
       parsed_registers.push_back(i);
     }
   };
@@ -632,7 +637,7 @@ namespace L1 {
 
   template<> struct action < label > {
     template< typename Input >
-	static void apply( const Input & in, Program & p){
+  static void apply( const Input & in, Program & p){
       if (p.entryPointLabel.empty()){
         p.entryPointLabel = in.string();
       } else {
@@ -663,7 +668,7 @@ namespace L1 {
 
   template<> struct action < function_name > {
     template< typename Input >
-	static void apply( const Input & in, Program & p){
+  static void apply( const Input & in, Program & p){
       auto newF = new Function();
       newF->name = in.string();
       p.functions.push_back(newF);
@@ -672,7 +677,7 @@ namespace L1 {
 
   template<> struct action < argument_number > {
     template< typename Input >
-	static void apply( const Input & in, Program & p){
+  static void apply( const Input & in, Program & p){
       auto currentF = p.functions.back();
       currentF->arguments = std::stoll(in.string());
     }
@@ -680,7 +685,7 @@ namespace L1 {
 
   template<> struct action < local_number > {
     template< typename Input >
-	static void apply( const Input & in, Program & p){
+  static void apply( const Input & in, Program & p){
       auto currentF = p.functions.back();
       currentF->locals = std::stoll(in.string());
     }
@@ -688,7 +693,7 @@ namespace L1 {
 
   template<> struct action < instruction_return_rule > {
     template< typename Input >
-	static void apply( const Input & in, Program & p){
+  static void apply( const Input & in, Program & p){
       auto currentF = p.functions.back();
       auto i = new Instruction_ret();
       i->arguments = currentF->arguments;

@@ -1,0 +1,55 @@
+(:populate
+  1 7
+    %encoded_default%array_position0 <- rsp
+    mem rsp 40 <- %encoded_default%array_position0
+    rsi <- 0
+    :allocate_array
+    %encoded_default%default0 <- rsi
+    mem rsp 48 <- %encoded_default%default0
+    %encoded_default%default1 <- mem rsp 48
+    %encoded_default <- %encoded_default%default1
+    %encoded_default <<= 1
+    %encoded_default += 1
+    rsi <- %encoded_default
+    r14 <- rdi
+    call allocate 2
+    %encoded_default%array_position1 <- mem rsp 40
+    r12 <- %encoded_default%array_position1
+    mem r12 0 <- rax
+    rdi <- r14
+    r14 >>= 1
+    %encoded_default%default2 <- mem rsp 48
+    rsi <- %encoded_default%default2
+    rsi += 1
+    %encoded_default%array_position2 <- mem rsp 40
+    %encoded_default%array_position2 += 8
+    mem rsp 40 <- %encoded_default%array_position2
+    goto :bound_check
+    :bound_check
+    cjump rsi < r14 :allocate_array :wrap
+    :wrap
+    %size <- rdi
+    call allocate 2
+    rdi <- %size
+    rdi >>= 1
+    %outer_header <- rax
+    %inner_ptr <- rax
+    :populate_outer_array
+    %encoded_default%array_position3 <- mem rsp 40
+    %encoded_default%array_position3 -= 8
+    mem rsp 40 <- %encoded_default%array_position3
+    %inner_ptr += 8
+    %encoded_default%array_position4 <- mem rsp 40
+    r12 <- %encoded_default%array_position4
+    %ptr_array_posn <- mem r12 0
+    rax <- %inner_ptr
+    mem rax 0 <- %ptr_array_posn
+    rdi -= 1
+    goto :outer_bound_check
+    :outer_bound_check
+    cjump 0 <= rdi :populate_outer_array :print_array
+    :print_array
+    rdi <- %outer_header
+    call print 1
+    return
+)

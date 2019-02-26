@@ -13,12 +13,15 @@ cd ../$dirName ;
 cp -r "${origDir}"/* ./ ;
 
 # Remove unnecessary files
+rm -rf .[a-z]* ;
+rm -rf .[A-Z]* ;
 rm -f */* &> /dev/null ;
 rm -rf lib Makefile scripts bin ;
 rm -r */tests ;
 rm -fr */obj ;
 rm -fr */bin ;
 rm -r */scripts ;
+rm -f */src/*.zip ;
 rm -rf `find ./ -name .DS_Store`
 rm -f `find ./ -iname *.swp`
 for i in `ls` ; do
@@ -36,15 +39,15 @@ for i in `ls` ; do
   done
   popd ;
 done
-find ./ -empty -type d -delete ;
+find ./ -empty -type d -delete &> /dev/null ;
 
 # Change permissions
-chmod 644 */src/*.cpp ;
-chmod 644 */src/*.hpp ;
-chmod 644 */src/*.h ;
+chmod 644 */src/*.cpp &> /dev/null ;
+chmod 644 -f */src/*.hpp &> /dev/null ;
+chmod 644 -f */src/*.h &> /dev/null ;
 
 # Create the package
-echo "SIGNATURE = fdsfjk" > signature.txt ;
+echo "e149bbb20cd5604b3a7d8c89c2871a802fc2e0d3" > signature.txt ;
 tar cfj ../${dirName}.tar.bz2 ./ ;
 cd ../ ;
 mv ${dirName}.tar.bz2 "${origDir}"/ ;

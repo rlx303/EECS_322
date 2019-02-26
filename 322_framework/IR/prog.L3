@@ -1,0 +1,92 @@
+define :main() {
+:entry
+%v <- 21
+%vtmp0 <- 21
+%vtmp0 <- %vtmp0 >> 1
+%vtmp1 <- 21
+%vtmp1 <- %vtmp1 >> 1
+%vtmp0 <- %vtmp0 * %vtmp1
+%vtmp0 <- %vtmp0 + 3
+%vtmp0 <- %vtmp0 << 1
+%vtmp0 <- %vtmp0 + 1
+%m <- call allocate(%vtmp0, 1)
+%vtmp2 <- %m + 8
+store %vtmp2 <- 5
+%vtmp2 <- %vtmp2 + 8
+store %vtmp2 <- 21
+%vtmp2 <- %vtmp2 + 8
+store %vtmp2 <- 21
+
+%r <- call :checkMatrix(%m, %v)
+call print(%r)
+return
+}
+define :checkMatrix(%m, %v) {
+:entry
+%l1encodedtmp3 <- 0 * 8
+%l1encodedtmp3 <- %l1encodedtmp3 + 16
+%l1encodedtmp3 <- %l1encodedtmp3 + %m
+%l1encoded <- load %l1encodedtmp3
+
+%l1encodedtmp4 <- 1 * 8
+%l1encodedtmp4 <- %l1encodedtmp4 + 16
+%l1encodedtmp4 <- %l1encodedtmp4 + %m
+%l2encoded <- load %l1encodedtmp4
+
+call print(%l1encoded)
+call print(%l2encoded)
+%l1 <- %l1encoded >> 1
+
+%l2 <- %l2encoded >> 1
+
+br :init
+:init
+%found <- 1
+%index <- 0
+br :header
+:header
+%check <- %index < %l1
+
+br %check :outerBody
+br :leave
+:outerBody
+%index2 <- 0
+br :header2
+:header2
+%check2 <- %index2 < %l2
+
+br %check2 :innerBody
+br :endOuterBody
+:innerBody
+%l1encodedtmp5 <- %m + 24
+%l1encodedtmp6 <- load %l1encodedtmp5
+%l1encodedtmp6 <- %l1encodedtmp6 >> 1
+%l1encodedtmp7 <- 0
+%l1encodedtmp8 <- %index
+%l1encodedtmp8 <- %l1encodedtmp8 * %l1encodedtmp6
+%l1encodedtmp7 <- %l1encodedtmp7 + %l1encodedtmp8
+%l1encodedtmp9 <- %index2
+%l1encodedtmp7 <- %l1encodedtmp7 + %l1encodedtmp9
+%l1encodedtmp7 <- %l1encodedtmp7 * 8
+%l1encodedtmp7 <- %l1encodedtmp7 + 32
+%l1encodedtmp10 <- %m + %l1encodedtmp7
+%e <- load %l1encodedtmp10
+
+%sameE <- %e = %v
+
+br %sameE :setAndLeave
+br :endInnerBody
+:endInnerBody
+%index2 <- %index2 + 1
+
+br :header2
+:endOuterBody
+%index <- %index + 1
+
+br :header
+:setAndLeave
+%found <- 3
+br :leave
+:leave
+return %found
+}

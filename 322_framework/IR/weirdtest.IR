@@ -1,0 +1,318 @@
+define int64 :main(){
+	:entry
+	int64[] %v
+	int64 %size
+	int64 %i
+	int64 %lim
+	int64 %cond
+	int64 %ele
+
+	%size <- call :encode(10)
+	%v <- new Array(%size)
+	%i <- 0
+	%lim <- call :decode(%size)
+	br :loop
+
+	:loop
+	%cond <- %i < %lim
+	br %cond :go :stop
+
+	:go
+	%ele <- call :encode(%i)
+	%v[%i] <- %ele
+	%i <- %i + 1
+	br :loop
+
+	:stop
+	call :print_array(%v)
+	br :test_div
+
+	:test_div
+	int64 %f
+	int64 %s
+	int64 %res
+	%f <- 1000
+	%s <- 50
+	%res <- call :is_divisible(%f, %s)
+	call print(%res)
+	%f <- 1001
+	%s <- 50
+	%res <- call :is_divisible(%f, %s)
+	call print(%res)
+	%f <- -1000
+	%s <- 50
+	%res <- call :is_divisible(%f, %s)
+	call print(%res)
+	%f <- -1001
+	%s <- 50
+	%res <- call :is_divisible(%f, %s)
+	call print(%res)
+	%f <- -1000
+	%s <- -50
+	%res <- call :is_divisible(%f, %s)
+	call print(%res)	
+	br :test_mult
+
+	:test_mult
+	%f <- 10
+	%s <- 5
+	%res <- call :multiply(%f, %s)
+	call print(%res)
+	%f <- -10
+	%s <- 50
+	%res <- call :multiply(%f, %s)
+	call print(%res)
+	%f <- -10
+	%s <- -50
+	%res <- call :multiply(%f, %s)
+	call print(%res)
+	%f <- -1001
+	%s <- 50
+	%res <- call :multiply(%f, %s)
+	call print(%res)
+	%f <- 17
+	%s <- -50
+	%res <- call :multiply(%f, %s)
+	call print(%res)
+	br :test_divide
+
+	:test_divide
+	%f <- 10
+	%s <- 5
+	%res <- call :divide(%f, %s)
+	call print(%res)
+	%f <- -9
+	%s <- 3
+	%res <- call :divide(%f, %s)
+	call print(%res)
+	%f <- -1000
+	%s <- -50
+	%res <- call :divide(%f, %s)
+	call print(%res)
+	%f <- -1001
+	%s <- 50
+	%res <- call :divide(%f, %s)
+	call print(%res)
+	%f <- 170
+	%s <- -50
+	%res <- call :divide(%f, %s)
+	call print(%res)
+
+	return 0
+}
+
+define int64 :encode(int64 %p) {
+	:entry
+	int64 %ret
+	%ret <- %p << 1
+	%ret <- %ret + 1
+	return %ret 
+}
+
+define int64 :decode(int64 %p) {
+	:entry
+	int64 %ret
+	%ret <- %p - 1
+	%ret <- %ret >> 1
+	return %ret 
+}
+
+define void :print_array(int64[] %v) {
+	:entry
+	int64 %i
+	int64 %len
+	int64 %cond
+	int64 %ele
+	%i <- 0
+	%len <- length %v 0
+	%len <- call :decode(%len)
+	br :loop
+
+	:loop
+	%cond <- %i < %len
+	br %cond :go :stop
+
+	:stop
+	return
+	
+	:go
+	%ele <- %v[%i]
+	call print(%ele)
+	%i <- %i + 1
+	br :loop
+}
+
+define int64 :is_divisible(int64 %first, int64 %second) {
+	:entry
+	int64 %cond
+	int64 %ret
+	int64 %f
+	int64 %s
+
+	%f <- %first
+	%s <- %second
+	%cond <- %first < 0
+	br %cond :fl :c
+
+	:fl
+	%f <- %first * -1
+	br :c
+
+	:c
+	%cond <- %second < 0
+	br %cond :sl :cc
+
+	:sl
+	%s <- %second * -1
+	br :cc
+
+	:cc
+	%cond <- %second = 0
+	br %cond :quit :ccc
+
+	:quit
+	%ret <- call :encode(0)
+	return %ret
+
+	:ccc
+	%cond <- %f = 0
+	br %cond :yes :cccc
+
+	:cccc
+	%f <- %f - %s
+	%cond <- %f < 0
+	br %cond :quit :ccc
+
+	:yes
+	%ret <- call :encode(1)
+	return %ret
+}
+
+define int64 :multiply(int64 %first, int64 %second) {
+	:entry
+	int64 %cond
+	int64 %ret
+	int64 %f
+	int64 %s
+	int64 %fneg
+	int64 %sneg
+	int64 %prod
+
+	%prod <- 0
+	%f <- %first
+	%fneg <- 0
+	%s <- %second
+	%sneg <- 0
+	%cond <- %first < 0
+	br %cond :fl :c
+
+	:fl
+	%f <- %first * -1
+	%fneg <- 1
+	br :c
+
+	:c
+	%cond <- %second < 0
+	br %cond :sl :cc
+
+	:sl
+	%s <- %second * -1
+	%sneg <- 1
+	br :cc
+
+	:cc
+	%cond <- %second = 0
+	br %cond :quit :ccc
+
+	:quit
+	%prod <- call :encode(0)
+	return %prod
+
+	:ccc
+	%cond <- %f = 0
+	br %cond :quit :cccc
+
+	:cccc
+	%prod <- %prod + %f
+	%s <- %s - 1
+	%cond <- %s = 0
+	br %cond :done :cccc
+
+	:done
+	%cond <- %fneg = %sneg
+	br %cond :pos :neg
+
+	:pos
+	%prod <- call :encode(%prod)
+	return %prod
+
+	:neg
+	%prod <- %prod * -1
+	%prod <- call :encode(%prod)
+	return %prod
+}
+
+define int64 :divide(int64 %first, int64 %second) {
+	:entry
+	int64 %cond
+	int64 %ret
+	int64 %f
+	int64 %s
+	int64 %fneg
+	int64 %sneg
+	int64 %quot
+
+	%quot <- 0
+	%f <- %first
+	%fneg <- 0
+	%s <- %second
+	%sneg <- 0
+	%cond <- %first < 0
+	br %cond :fl :c
+
+	:fl
+	%f <- %first * -1
+	%fneg <- 1
+	br :c
+
+	:c
+	%cond <- %second < 0
+	br %cond :sl :cc
+
+	:sl
+	%s <- %second * -1
+	%sneg <- 1
+	br :cc
+
+	:cc
+	%cond <- %second = 0
+	br %cond :quit :ccc
+
+	:quit
+	%quot <- call :encode(0)
+	return %quot
+
+	:ccc
+	%cond <- %f = 0
+	br %cond :quit :cccc
+
+	:cccc
+	%quot <- %quot + 1
+	%f <- %f - %s
+	%cond <- %f < %s
+	br %cond :done :cccc
+
+	:done
+	%cond <- %fneg = %sneg
+	br %cond :pos :neg
+
+	:pos
+	%quot <- call :encode(%quot)
+	return %quot
+
+	:neg
+	%quot <- %quot * -1
+	%quot <- call :encode(%quot)
+	return %quot
+}
+

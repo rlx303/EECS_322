@@ -7,22 +7,6 @@ namespace L1 {
 
 extern std::map<std::string, std::string> reg_map;
 
-  // reg_map["r8"] = "r8b";
-  // reg_map["r9"] = "r9b";
-  // reg_map["r10"] = "r10b";
-  // reg_map["r11"] = "r11b";
-  // reg_map["r12"] = "r12b";
-  // reg_map["r13"] = "r13b";
-  // reg_map["r14"] = "r14b";
-  // reg_map["r15"] = "r15b";
-  // reg_map["rax"] = "al";
-  // reg_map["rbp"] = "bpl";
-  // reg_map["rbx"] = "bl";
-  // reg_map["rcx"] = "cl";
-  // reg_map["rdi"] = "dil";
-  // reg_map["rdx"] = "dl";
-  // reg_map["rsi"] = "sil";
-
   struct Item {
     std::string data;
     Item(std::string input) {data = input;}
@@ -58,8 +42,8 @@ extern std::map<std::string, std::string> reg_map;
     }
   };
 
-  struct I_sx : Item {
-    I_sx(std::string input) :Item(input) {}
+  struct I_rcx : Item {
+    I_rcx(std::string input) :Item(input) {}
     std::string get_x86() override {
       return "%" + reg_map[data];
     }
@@ -130,8 +114,6 @@ extern std::map<std::string, std::string> reg_map;
       }
     }
   };
-
-
 
   /*
    * Instruction interface.

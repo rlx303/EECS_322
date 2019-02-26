@@ -1,46 +1,38 @@
-(:go
- (:go
-   0 0
-   rdi <- 5
-   call print 1
-   r10 <- rdi
-   rdi <- 11
-   rsi <- 0
-   call allocate 2
-   r11 <- rax
-   mem rsp -8 <- :odd_num_1
-   rdi <- 2
-   call :odd_num 1
-   :odd_num_1
-   mem r11 8 <- rax
-   mem r11 16 <- 5
-   mem r11 24 <- 7
-   mem r11 32 <- 9
-   mem r11 40 <- 11
-   rsi <- mem r11 8
-   rdi <- mem r11 16
-   rdi -= rsi
-   rdi++
-   rdi += mem r11 16
-   rcx <- mem r11 24
-   rdi <<= rcx
-   rdi &= mem r11 32
-   rdi -= mem r11 40
-   rdi += 3
-   rdi <<= 1
-   rdi ++
-   call print 1
+define :main() {
+   %print_num <- 5
+   call print (%print_num)
+   %idk <- %print_num
+   %num_ele <- 11
+   %init_val <- 0
+   %ret_val <- call allocate (%num_ele, %init_val)
+   %arg <- 2
+   %odd_ret <- call :odd_num (%arg)
+   %r1116 <- 5
+   %and_by <- 9
+   %sub_by <- 11
+   %odd_ret <- %odd_ret - r1116
+   %odd_ret <- %odd_ret + 1
+   %odd_ret <- %odd_re + %r1116
+   %shift_by <- 7
+   %odd_ret <- %odd_ret << %shift_by
+   %odd_ret <- %odd_ret & %and_by
+   %odd_ret <- %odd_ret - %sub_by
+   %odd_ret <- %odd_ret + 3
+   %odd_ret <- %odd_ret << 1
+   %odd_ret <- %odd_ret + 1
+   call print (%odd_ret)
    return
- )
- (:odd_num
-   1 0
+   }
+
+ define :odd_num (%p) {
    %num <- 1
    :start
-   rdi -= 1
-   cjump rdi <= 0 :done
-   %num += 2
-   goto :start
+   %p <- %p - 1
+   %c <- %p <=0
+   br %c :done
+   %num <- %num + 2
+   br :start
    :done
-   rax <- %num
-   return)
-)
+   return %num
+ }
+

@@ -1,13 +1,15 @@
-#include <string>
-#include <iostream>
-#include <fstream>
 #include <algorithm>
-#include <set>
-#include <map>
+#include <fstream>
+#include <iostream>
 #include <iterator>
+#include <map>
+#include <set>
+#include <stack>
+#include <string>
 
 #include <code_generator.h>
 #include <utils.h>
+#include <ig.h>
 
 namespace L2{
 
@@ -17,38 +19,58 @@ namespace L2{
      * Open the output file.
      */ 
     std::ofstream of;
-    of.open("prog.S");
-    
-    std::string tab = "    ";
-    of << ".text\n";
-    of << ".globl go\n";
-    of << "go:\n";
-    of << "# save callee-saved registers\n";
-    of << "pushq %rbx\n";
-    of << "pushq %rbp\n";
-    of << "pushq %r12\n";
-    of << "pushq %r13\n";
-    of << "pushq %r14\n";
-    of << "pushq %r15\n\n";
+    of.open("prog.L1");
 
-    of << "call " << p.entryPointLabel.replace(0, 1, "_") << '\n';
+    of << '(' << p.entryPointLabel << '\n';
 
-    of <<"# restore callee-saved registers and return\n";
-    of << "popq %r15\n";
-    of << "popq %r14\n";
-    of << "popq %r13\n";
-    of << "popq %r12\n";
-    of << "popq %rbp\n";
-    of << "popq %rbx\n";
-    of << "retq\n";
-
-    for (const auto& f : p.functions){    
-        of << f->name.replace(0, 1, "_") << ":\n";
-        of << "subq $" << f->locals*8 << ", %rsp #Allocate locals\n";
-        for (const auto& i : f->instructions) {
-            of << i->print_L2() << "\n";
+    for (auto &f : p.functions) {
+      std::set<L2::Node> spilled_vars;
+      L2::IG ig;
+      do {
+        L2::clear_in_out(f);
+        L2::generate_in_out(f);
+        ig = L2::generate_interference_graph(f);
+        spilled_vars = L2::color_graph(f, ig);
+        if (!spilled_vars.empty()) {
+          std::string suffix = ig.longest_var_name();
+          for (auto &node : spilled_vars) {
+            L2::spill(f, node.get_item(), node.get_item() + suffix.erase(0,1));
+          }
         }
+        else {
+            break;
+        }
+        //f->print();
+        //std::cout << "4" << std::endl;
+        L2::clear_in_out(f);
+        L2::generate_in_out(f);
+        //std::cout << "5" << std::endl;
+        ig = L2::generate_interference_graph(f);
+        //std::cout << "6" << std::endl;
+        spilled_vars = L2::color_graph(f, ig);
+        //std::cout << "7" << std::endl;
+      }while(!spilled_vars.empty());
+
+      of << '(' << f->name << '\n';
+
+      of << f->arguments << ' ' << f->locals << '\n';
+
+      auto var_map = ig.get_var_map();
+      for (auto& i : f->instructions) {
+        i = L2::ins_replace_var_with_reg(i, var_map);
+        if (auto a = dynamic_cast<Instruction_assign*>(i)) {
+          if (auto s = dynamic_cast<I_stack_arg*>(a->src)) {
+            s->get_locals(f->locals);
+          }
+        }
+        of << i->print_L2() << '\n';
+      }
+
+      of << ')' << '\n';
+
     }
+
+    of << ')' << '\n';
 
     /* 
      * Close the output file.
@@ -82,25 +104,28 @@ namespace L2{
     }while(changed);
   }
 
-  std::map<std::string, std::set<std::string>> generate_interference_graph(Function* f){
-    std::map<std::string, std::set<std::string>> ig;
+  void clear_in_out(Function* f){
+    for (auto &i : f->instructions) {
+        i->in = std::set<std::string>();
+        i->out = std::set<std::string>();
+    }
+  }
 
+  IG generate_interference_graph(Function* f){
+    IG ig = IG();
+ 
     //Initialize with all GP regs
     for (const auto &pair1 : reg_map) {
         for (const auto &pair2 : reg_map) {
-            ig_insert(ig, pair1.first, pair2.first);
+            ig.insert(pair1.first, pair2.first);
         }
     }
 
     for (const auto &i : f->instructions) {
-        ig_connect(ig, i->in, i->in);
-        ig_connect(ig, i->out, i->out);
-        if (!skip_kill_out(i)) {
-            ig_connect(ig, i->get_kill(), i->out);
-        } else {
-            ig_init_set(ig, i->get_kill());
-        }
-        sop_constraint(i, ig);
+        ig.connect(i->in, i->in);
+        ig.connect(i->out, i->out);
+        ig.connect(i->get_kill(), i->out);
+        ig.sop_constraint(i);
     }
     return ig;
   }
@@ -134,4 +159,12 @@ namespace L2{
     }
     return;
   }
+  
+  std::set<Node> color_graph(Function* f, IG &ig) {
+    std::stack<Node> nodes;
+    while(!ig.empty()) {
+        nodes.push(ig.remove_next());
+    }
+    return ig.add_colors_to_nodes(nodes);
+  } 
 }

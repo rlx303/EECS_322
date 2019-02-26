@@ -1,49 +1,39 @@
-(:go
- (:go
-  0 0
-  rdi <- 10
-  rsi <- 9
-  mem rsp -8 <- :max_ret
-  call :max 2
-  :max_ret
-  rax <<= 1
-  rax++
-  rdi <- rax
-  call print 1
-  rdi <- 10
-  rsi <- 3
-  mem rsp -8 <- :div_ret
-  call :divide 2
-  :div_ret
-  rax <<= 1
-  rax++
-  rdi <- rax
-  call print 1
+define :main(){
+  %first <- 10
+  %second <- 9
+  %ret <- call :max (%first, %second)
+  %ret <- %ret << 1
+  %ret <- %ret + 1
+  call print (%ret)
+  %first <- 10
+  %second <- 3
+  %ret <- call :divide (%first, %second)
+  %ret <- %ret << 1
+  %ret <- %ret + 1
+  call print (%ret)
   return
-  )
+  }
 
- (:max
-  2 0
-  %first <- rdi
-  %second <- rsi
-  cjump %second < %first :FIRST
-  rax <- %second
-  return
+define :max(%first, %second){
+  %comp <- %second < %first
+  br %comp :FIRST
+  %ret <- %second
+  return %ret
   :FIRST
-  rax <- %first
-  return
- )
+  %ret <- %first
+  return %ret
+ }
 
- (:divide
-  2 0
+define :divide(%first, %second){
   %quotient <- 0
   :START
-  rdi -= rsi
-  cjump rdi <= 0 :DONE
-  %quotient++
-  goto :START
+  %first <- %first - %second
+  %comp <- %first < 0
+  br %comp :DONE
+  %quotient <- %quotient + 1
+  br :START
   :DONE
-  rax <- %quotient
-  return
- )
-)
+  return %quotient
+  }
+
+

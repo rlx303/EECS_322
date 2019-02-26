@@ -79,64 +79,6 @@ namespace L2{
     return ret;
   }
 
-  void ig_insert(std::map<std::string, std::set<std::string>>& ig, std::string key, std::string value) {
-    if(key != value) {
-        ig.insert(std::make_pair(key, std::set<std::string>()));
-        ig[key].insert(value);
-        ig.insert(std::make_pair(value, std::set<std::string>()));
-        ig[value].insert(key);
-    }
-  }
-
-  void ig_connect(std::map<std::string, std::set<std::string>>& ig, std::set<std::string> set1, std::set<std::string> set2) {
-  	if (set1.empty()){
-  		ig_init_set(ig, set2);
-  	} 
-  	else if (set2.empty()) {
-  		ig_init_set(ig, set1);
-  	}
-    for (const auto &val1 : set1) {
-        for (const auto &val2 : set2) {
-            ig_insert(ig, val1, val2);
-        }
-    } 
-  }
-
-  void ig_init_set(std::map<std::string, std::set<std::string>>& ig, std::set<std::string> set) {
-    for (const auto &val : set) {
-        ig.insert(std::make_pair(val, std::set<std::string>()));
-    }   
-  }
-
-
-  bool skip_kill_out(Instruction* i) {
-    if (auto a = dynamic_cast<Instruction_assign*>(i)) {
-        if (a->op->is_arrow()){
-            if (a->src->is_var() || a->src->is_reg()) {
-                if (a->dst->is_var() || a->dst->is_reg()) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-  }
-
-  void sop_constraint(Instruction* i, std::map<std::string, std::set<std::string>>& ig) {
-    if (auto a = dynamic_cast<Instruction_assign*>(i)) {
-        if (a->op->is_sop()){
-            if (a->src->is_var()) {
-                std::string var = a->src->get_L2();
-                for (const auto &pair : reg_map) {
-                    if (pair.first != "rcx") {
-                        ig_insert(ig, var, pair.first);
-                    }
-                }
-            }
-        }
-    }
-  }
-   
   bool ins_contains(Instruction* i, std::string var) {
   	return i->print_L2().find(var) != std::string::npos;
   }
@@ -203,7 +145,78 @@ namespace L2{
         	a->label->data=spilled_var;
         } 
     }
+    else if (auto a = dynamic_cast<Instruction_cmp*>(ins)) {
+    	if (a->dst->data==var) {
+    		a->dst->data=spilled_var;
+    	}
+    	if (a->t1->data==var) {
+    		a->t1->data=spilled_var;
+    	}
+    	if (a->t2->data==var) {
+    		a->t2->data=spilled_var;
+    	}
+    }
     return ins;
+  }
+
+  Instruction *ins_replace_var_with_reg(Instruction* ins, std::map<std::string, std::string> &var_map) {
+  	if (auto a = dynamic_cast<Instruction_assign*>(ins)) {
+        if (var_map.count(a->dst->data)==1) {
+        	a->dst->data=var_map[a->dst->data];
+        }
+        if (var_map.count(a->src->data)==1) {
+        	a->src->data=var_map[a->src->data];
+        }
+    }
+    else if (auto a = dynamic_cast<Instruction_inc_dec*>(ins)) {
+        if (var_map.count(a->dst->data)==1) {
+        	a->dst->data=var_map[a->dst->data];
+        }
+    }
+    else if (auto a = dynamic_cast<Instruction_two_label_jump*>(ins)) {
+        if (var_map.count(a->t1->data)==1) {
+        	a->t1->data=var_map[a->t1->data];
+        }
+        if (var_map.count(a->t2->data)==1) {
+        	a->t2->data=var_map[a->t2->data];
+        }    
+    }
+    else if (auto a = dynamic_cast<Instruction_one_label_jump*>(ins)) {
+        if (var_map.count(a->t1->data)==1) {
+        	a->t1->data=var_map[a->t1->data];
+        }
+        if (var_map.count(a->t2->data)==1) {
+        	a->t2->data=var_map[a->t2->data];
+        } 
+    }
+    else if (auto a = dynamic_cast<Instruction_wwe*>(ins)) {
+		if (var_map.count(a->dst->data)==1) {
+        	a->dst->data=var_map[a->dst->data];
+        }        
+        if (var_map.count(a->w1->data)==1) {
+        	a->w1->data=var_map[a->w1->data];
+        }
+        if (var_map.count(a->w2->data)==1) {
+        	a->w2->data=var_map[a->w2->data];
+        }
+    }
+    else if (auto a = dynamic_cast<Instruction_call*>(ins)) {
+        if (var_map.count(a->label->data)==1) {
+        	a->label->data=var_map[a->label->data];
+        } 
+    }
+    else if (auto a = dynamic_cast<Instruction_cmp*>(ins)) {
+    	if (var_map.count(a->dst->data)==1) {
+    		a->dst->data=var_map[a->dst->data];
+    	}
+        if (var_map.count(a->t1->data)==1) {
+        	a->t1->data=var_map[a->t1->data];
+        }
+        if (var_map.count(a->t2->data)==1) {
+        	a->t2->data=var_map[a->t2->data];
+        } 
+    }
+    return ins;  
   }
 
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <vector>
 #include <map>
 #include <set>
@@ -13,7 +14,7 @@ extern std::map<std::string, std::string> reg_map;
     Item(std::string input) {data = input;}
 
     virtual std::string get_L2() { return data; }
-    virtual std::string get_x86() { return ""; }
+    virtual std::string get_L1() { return ""; }
     virtual bool is_int() {return false;}
     virtual bool is_var() {return false;}
     virtual bool is_reg() {return false;}
@@ -25,7 +26,7 @@ extern std::map<std::string, std::string> reg_map;
 
   struct I_num : Item {
     I_num(std::string input) :Item(input) {}
-    std::string get_x86() override {
+    std::string get_L1() override {
       return "$" + data;
     }
 
@@ -36,7 +37,7 @@ extern std::map<std::string, std::string> reg_map;
 
   struct I_label : Item {
     I_label(std::string input) :Item(input) {}
-    std::string get_x86() override {
+    std::string get_L1() override {
       std::string ret = data;
       return ret.replace(0, 1, "$_");
     }
@@ -45,7 +46,7 @@ extern std::map<std::string, std::string> reg_map;
 
   struct I_reg : Item {
     I_reg(std::string input) :Item(input) {}
-    std::string get_x86() override {
+    std::string get_L1() override {
       return "%" + data;
     }
     bool is_reg() override{
@@ -55,7 +56,7 @@ extern std::map<std::string, std::string> reg_map;
 
   struct I_var : Item {
     I_var(std::string input) :Item(input) {}
-    std::string get_x86() override {
+    std::string get_L1() override {
       return data;
     }
     bool is_var() override {
@@ -65,7 +66,7 @@ extern std::map<std::string, std::string> reg_map;
 
   struct I_rcx : Item {
     I_rcx(std::string input) :Item(input) {}
-    std::string get_x86() override {
+    std::string get_L1() override {
       return "%" + reg_map[data];
     }
   };
@@ -78,7 +79,7 @@ extern std::map<std::string, std::string> reg_map;
     std::string get_L2() override {
       return "mem " + data + " " + M;
     }
-    std::string get_x86() override {
+    std::string get_L1() override {
       return M + "(%" + data + ")";
     }
     bool is_mem() override {
@@ -88,7 +89,7 @@ extern std::map<std::string, std::string> reg_map;
 
   struct I_arrow : Item {
     I_arrow(std::string input) :Item(input) {}
-    std::string get_x86() override {
+    std::string get_L1() override {
       return "movq";
     }
     bool is_arrow() override {
@@ -98,12 +99,12 @@ extern std::map<std::string, std::string> reg_map;
 
   struct I_aop : Item {
     I_aop(std::string input) :Item(input) {}
-    std::string get_x86() override;
+    std::string get_L1() override;
   };
 
   struct I_sop : Item {
     I_sop(std::string input) :Item(input) {}
-    std::string get_x86() override;
+    std::string get_L1() override;
     bool is_sop() override {
       return true;
     }
@@ -115,17 +116,21 @@ extern std::map<std::string, std::string> reg_map;
 
   struct I_inc_dec : Item {
     I_inc_dec(std::string input) :Item(input) {}
-    std::string get_x86() override;
+    std::string get_L1() override;
   };
 
   struct I_stack_arg : Item {
+    int locals;
     I_stack_arg(std::string input) :Item(input) {}
-    std::string get_L2() override {
+    std::string get_L1() override {
       return "stack-arg " + data;
     }
-    std::string get_x86() override {
-      return "stack-arg " + data; ///////////TBD
-    }  
+    std::string get_L2() override {
+      return "mem rsp " + std::to_string(locals*8+std::stoi(data));
+    }
+    void get_locals(int l) {
+      locals = l;
+    }
   };
 
 
@@ -138,7 +143,7 @@ extern std::map<std::string, std::string> reg_map;
     std::set<std::string> in = std::set<std::string>();
     std::set<std::string> out = std::set<std::string>();
     virtual std::string print_L2() {return "";}
-    virtual std::string print_x86() {return "";}
+    virtual std::string print_L1() {return "";}
     virtual std::set<std::string> get_gen() {return std::set<std::string>();}
     virtual std::set<std::string> get_kill() {return std::set<std::string>();}
   };
@@ -152,7 +157,7 @@ extern std::map<std::string, std::string> reg_map;
     std::string print_L2() override {
       return "return";
     }
-    std::string print_x86() override {
+    std::string print_L1() override {
       int64_t offset = (arguments<=6) ? locals*8 : (arguments-6)*8+locals*8;
       return "addq $" + std::to_string(offset) + ", %rsp\n" + "retq";
     }
@@ -166,8 +171,8 @@ extern std::map<std::string, std::string> reg_map;
     std::string print_L2() override {
       return dst->get_L2() + " " + op->get_L2() + " " + src->get_L2();
     }
-    std::string print_x86() override {
-      return op->get_x86() + " " + src->get_x86() + ", " + dst->get_x86();
+    std::string print_L1() override {
+      return op->get_L1() + " " + src->get_L1() + ", " + dst->get_L1();
     }
     std::set<std::string> get_gen() override;
 
@@ -180,8 +185,8 @@ extern std::map<std::string, std::string> reg_map;
     std::string print_L2() override {
       return dst->get_L2() + op->get_L2();
     }
-    std::string print_x86() override {
-      return op->get_x86() + " " + dst->get_x86();
+    std::string print_L1() override {
+      return op->get_L1() + " " + dst->get_L1();
     }
 
     std::set<std::string> get_gen() override;
@@ -194,7 +199,7 @@ extern std::map<std::string, std::string> reg_map;
     std::string print_L2() override {
       return label->get_L2();
     }
-    std::string print_x86() override {
+    std::string print_L1() override {
       return label->get_L2().replace(0, 1, "_") + ":";
     } 
   };
@@ -204,7 +209,7 @@ extern std::map<std::string, std::string> reg_map;
     std::string print_L2() override {
       return "goto " + label->get_L2();
     }
-    std::string print_x86() override {
+    std::string print_L1() override {
       return "jmp " + label->get_L2().replace(0, 1, "_");
     } 
   };
@@ -219,7 +224,7 @@ extern std::map<std::string, std::string> reg_map;
       return dst->get_L2() + " " + op->get_L2() + " " + 
       t1->get_L2() + " " + cmp->get_L2() + " " + t2->get_L2();
     }
-    std::string print_x86() override;
+    std::string print_L1() override;
     std::set<std::string> get_kill() override;
     std::set<std::string> get_gen() override;
   };
@@ -235,7 +240,7 @@ extern std::map<std::string, std::string> reg_map;
       t2->get_L2() + " " + label1->get_L2() + " " + label2->get_L2();
     }
 
-    std::string print_x86() override;
+    std::string print_L1() override;
 
     std::set<std::string> get_gen() override;
   };
@@ -251,7 +256,7 @@ extern std::map<std::string, std::string> reg_map;
       t2->get_L2() + " " + label1->get_L2();
     }
 
-    std::string print_x86() override;
+    std::string print_L1() override;
 
     std::set<std::string> get_gen() override;
   };
@@ -264,9 +269,9 @@ extern std::map<std::string, std::string> reg_map;
     std::string print_L2() override {
       return dst->get_L2() + " @ " + w1->get_L2() + " " + w2->get_L2() + " " + E->get_L2();
     }
-    std::string print_x86() override {
-      return "lea (" + w1->get_x86() + ", " + w2->get_x86() + ", " + E->get_L2() + "), " 
-      + dst->get_x86();
+    std::string print_L1() override {
+      return "lea (" + w1->get_L1() + ", " + w2->get_L1() + ", " + E->get_L2() + "), " 
+      + dst->get_L1();
     }
 
     std::set<std::string> get_kill() override;
@@ -279,7 +284,7 @@ extern std::map<std::string, std::string> reg_map;
     std::string print_L2() override {
       return "call " + label->get_L2() + " " + arg_num->get_L2();
     }
-    std::string print_x86() override;
+    std::string print_L1() override;
 
     std::set<std::string> get_gen() override;
 
@@ -293,7 +298,7 @@ extern std::map<std::string, std::string> reg_map;
     std::string print_L2() override {
       return "call " + name + " " + arg_num;
     }
-    std::string print_x86() override {
+    std::string print_L1() override {
       std::string f = (name == "array-error") ? "array_error" : name;
       return "call " + f;
     }
@@ -310,6 +315,16 @@ extern std::map<std::string, std::string> reg_map;
     int64_t arguments;
     int64_t locals;
     std::vector<Instruction *> instructions;
+    void print() {
+      std::cout << "#######Printing function " << name << std::endl;
+      std::cout << '(' << name << std::endl;
+      std::cout << "  " << arguments << ' ' << locals << std::endl;
+      for (auto &i : instructions) {
+        std::cout << "    " << i->print_L2() << std::endl;
+      }
+      std::cout << ')' << std::endl;
+      std::cout << "End of function#######" << std::endl;
+    }
   };
 
   struct Spill_function : Function{
